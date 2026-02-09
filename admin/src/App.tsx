@@ -1,10 +1,16 @@
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { Button } from "./components/ui/button";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import { toast, Toaster } from "sonner";
+import authStore from "./store/useAuthStore";
 
 function App() {
+  const {isAuthenticated}=authStore()
+  console.log(isAuthenticated);
+  if(!isAuthenticated){
+    return <Navigate to={"/login"}/>
+  }
   return (
     <div className="h-screen flex bg-background">
       <Sidebar />
