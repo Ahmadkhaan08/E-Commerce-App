@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router-dom";
 import { Button } from "./components/ui/button";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -7,12 +7,17 @@ import authStore from "./store/useAuthStore";
 
 function App() {
   const {isAuthenticated}=authStore()
-  console.log(isAuthenticated);
-  if(!isAuthenticated){
-    return <Navigate to={"/login"}/>
-  }
+  // console.log(isAuthenticated);
+  // if(!isAuthenticated){
+  //   return <Navigate to={"/login"}/>
+  // }
   return (
-    <div className="h-screen flex bg-background">
+    <>
+        <Toaster />
+
+    {!isAuthenticated?( <Navigate to={"/login"}/>):(
+
+      <div className="h-screen flex bg-background">
       <Sidebar />
       <Button onClick={()=>toast.info("Hello",{position:"top-center"})}>Click Me</Button>
       <div className="flex flex-col flex-1 max-w-[--breakpoint-2xl] ml-64 bg-gray-600">
@@ -20,10 +25,11 @@ function App() {
         <main>
           <Outlet />
         </main>
-        <Toaster />
       </div>
       
     </div>
+    )}
+  </>
   );
 }
 
