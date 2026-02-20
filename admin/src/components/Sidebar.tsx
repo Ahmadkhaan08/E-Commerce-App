@@ -502,7 +502,10 @@ const Sidebar = ({ open, setOpen }: SlidebarProps) => {
 
   {/* Logout */}
   <div className="p-4 border-t border-gray-800 bg-gray-900">
-    <motion.div className={cn("flex items-center gap-3 mb-4", open ? "justify-start" : "justify-center")}>
+    <motion.div className={cn("flex items-center gap-3 mb-4", open ? "justify-start" : "justify-center")} 
+    initial={{opacity:0,y:10}}
+    animate={{opacity:1,y:0}}
+    transition={{duration:0.3 ,delay:0.2}}>
       <div className="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-100 font-bold shadow-md ring-2 ring-gray-500/40">
         {user?.avatar ? (
           <img src={user.avatar} alt={user.name} className="rounded-full object-cover h-full w-full" />
@@ -510,12 +513,18 @@ const Sidebar = ({ open, setOpen }: SlidebarProps) => {
           user?.name.charAt(0).toUpperCase()
         )}
       </div>
+      <AnimatePresence>
       {open && (
-        <div className="flex flex-col gap-1">
+        <motion.div
+         initial={{ opacity: 0, x: -10 }}
+               animate={{ opacity: 1, x: 0 }}
+                 exit={{ opacity: 0, x: -10 }}
+                 transition={{ duration: 0.2 }} className="flex flex-col gap-1">
           <span className="text-sm text-gray-100 font-semibold capitalize truncate max-w-[150px]">{user?.name}</span>
           <span className="text-xs text-gray-400 capitalize font-medium">{user?.role}</span>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </motion.div>
 
     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
