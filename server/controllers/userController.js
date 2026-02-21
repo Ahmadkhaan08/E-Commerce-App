@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import userModel from "../models/userModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 // get User Profiles
 export const getUsers = asyncHandler(async (req, res) => {
@@ -12,19 +13,26 @@ export const getUsers = asyncHandler(async (req, res) => {
 
 // Create User
 export const createUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role, addresses } = req.body;
+  const { name, email, password, role, addresses, avatar } = req.body;
 
   const userExists = await userModel.findOne({ email });
   if (userExists) {
     res.status(400);
     throw new Error("User already exists!");
   }
+
+  // let imageUrl=""
+  // const result =await cloudinary.uploader.upload(avatar,{
+  //   folder:"dashboard/users"
+  // })
+  // imageUrl=result.secure_url
   const newUser = await userModel.create({
     name,
     email,
     password,
     role,
     addresses: [],
+    // avatar:imageUrl
   });
   if (newUser) {
     res.status(200).json({
@@ -34,6 +42,7 @@ export const createUser = asyncHandler(async (req, res) => {
       avatar: newUser.avatar,
       role: newUser.role,
       addresses: newUser.addresses || [],
+      // avatar:newUser.avatar
     });
   } else {
     res.status(401);
@@ -69,6 +78,13 @@ export const updateUser = asyncHandler(async (req, res) => {
     user.role = req.body.role;
   }
   user.addresses = req.body.addresses || user.addresses;
+
+  if (req.body.avatar && req.body.avatar !== user.avatar) {
+    const result = await cloudinary.uploader.upload(req.body.avatar, {
+      folder: "dashboard/avatars",
+    });
+    user.avatar=result.secure_url
+  }
 
   const updatedUser = await user.save();
   if (updatedUser) {
@@ -146,17 +162,17 @@ export const addAddress = asyncHandler(async (req, res) => {
     });
   }
 
-  await user.save()
+  await user.save();
   res.json({
-    success:true,
-    addresses:user.addresses,
-    message:"New Address Added!"
-  })
+    success: true,
+    addresses: user.addresses,
+    message: "New Address Added!",
+  });
 });
 
 // Update address
-export const updateAddress=asyncHandler(async(req,res)=>{
-    const user = await userModel.findById(req.params.id);
+export const updateAddress = asyncHandler(async (req, res) => {
+  const user = await userModel.findById(req.params.id);
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -171,39 +187,38 @@ export const updateAddress=asyncHandler(async(req,res)=>{
     throw new Error("Not authorized to modify this user's addresses");
   }
 
-  const address=await user.addresses.id(req.params.addressId)
+  const address = await user.addresses.id(req.params.addressId);
 
-  if(!address){
+  if (!address) {
     res.status(404);
     throw new Error("Address not found");
   }
 
-    const { street, city, country, postalCode, isDefault } = req.body;
-    if(street)  address.street=street
-    if(city) address.city=city
-    if(country) address.country=country
-    if(postalCode) address.postalCode=postalCode
+  const { street, city, country, postalCode, isDefault } = req.body;
+  if (street) address.street = street;
+  if (city) address.city = city;
+  if (country) address.country = country;
+  if (postalCode) address.postalCode = postalCode;
 
-     // If this is set as default, make other addresses non-default
-    if(isDefault){
-        user.addresses.forEach((addr)=>{
-            addr.isDefault=false
-        })
-            isDefault=true
-    }
+  // If this is set as default, make other addresses non-default
+  if (isDefault) {
+    user.addresses.forEach((addr) => {
+      addr.isDefault = false;
+    });
+    isDefault = true;
+  }
 
-    await user.save()
-      res.json({
-    success:true,
-    addresses:user.addresses,
-    message:"Address updated successfully!"
-  })
-
-})
+  await user.save();
+  res.json({
+    success: true,
+    addresses: user.addresses,
+    message: "Address updated successfully!",
+  });
+});
 
 // delete address
-export const deleteAddress=asyncHandler(async(req,res)=>{
-    const user = await userModel.findById(req.params.id);
+export const deleteAddress = asyncHandler(async (req, res) => {
+  const user = await userModel.findById(req.params.id);
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -218,23 +233,23 @@ export const deleteAddress=asyncHandler(async(req,res)=>{
     throw new Error("Not authorized to modify this user's addresses");
   }
 
-  const address=await user.addresses.id(req.params.addressId)
+  const address = await user.addresses.id(req.params.addressId);
 
-  if(!address){
+  if (!address) {
     res.status(404);
     throw new Error("Address not found");
   }
-// If deleting default address, make the first remaining address default
-  const wasDefault=address.isDefault
-  user.addresses.pull(req.params.addressId)
+  // If deleting default address, make the first remaining address default
+  const wasDefault = address.isDefault;
+  user.addresses.pull(req.params.addressId);
 
-  if(wasDefault && user.addresses.length>0){
-    user.addresses[0].isDefault=true
+  if (wasDefault && user.addresses.length > 0) {
+    user.addresses[0].isDefault = true;
   }
-     await user.save()
-      res.json({
-    success:true,
-    addresses:user.addresses,
-    message:"Address deleted successfully!"
-  })
-})
+  await user.save();
+  res.json({
+    success: true,
+    addresses: user.addresses,
+    message: "Address deleted successfully!",
+  });
+});

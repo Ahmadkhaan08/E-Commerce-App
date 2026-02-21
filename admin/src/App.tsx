@@ -10,13 +10,10 @@ import { cn } from "./lib/utils";
 function App() {
   const {isAuthenticated}=authStore()
   const [sidebarOpen , setSidebarOpen]=useState(true)
-  // console.log(isAuthenticated);
-  // if(!isAuthenticated){
-  //   return <Navigate to={"/login"}/>
-  // }
+  
   return (
     <>
-        <Toaster />
+        <Toaster position="top-center" />
 
     {!isAuthenticated?( <Navigate to={"/login"}/>):(
 
