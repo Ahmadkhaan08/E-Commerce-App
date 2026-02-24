@@ -29,3 +29,8 @@ export const userSchema = z.object({
   role: z.enum(["admin", "user", "deliveryman"], "Please select a valid role"),
   avatar: z.string().optional(),
 });
+
+export const brandSchema=z.object({
+  name:z.string().min(2,{message:"Name must be at least 2 characters!"}),
+  image:z.string().optional()
+})

@@ -257,14 +257,14 @@ const Users = () => {
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Users2 className="h-8 w-8 text-indigo-600" />
-            <span className="text-2xl font-bold text-indigo-600">{total}</span>
+            <Users2 className="h-8 w-8" />
+            <span className="text-2xl font-bold ">{total}</span>
           </div>
           <Button
             variant={"outline"}
             disabled={refreshing}
             onClick={refreshUsers}
-            className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+            className=" hover:bg-indigo-50"
           >
             <RefreshCw
               className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
@@ -273,7 +273,6 @@ const Users = () => {
           </Button>
           {isAdmin && (
             <Button
-              className="bg-indigo-600 hover:bg-indigo-700"
               onClick={() => setIsAddModelOpen(true)}
             >
               <Plus className="mr-2 h-4 w-4" />

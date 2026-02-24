@@ -1,8 +1,7 @@
 import { Navigate, Outlet } from "react-router";
-import { Button } from "./components/ui/button";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-import { toast, Toaster } from "sonner";
+import {  Toaster } from "sonner";
 import authStore from "./store/useAuthStore";
 import { useState } from "react";
 import { cn } from "./lib/utils";

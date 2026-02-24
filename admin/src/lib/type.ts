@@ -6,3 +6,10 @@ export interface User  {
   role: "admin" | "user" | "deliveryman";
   createdAt:string
 };
+
+export interface Brand{
+  _id:string;
+  name:string;
+  image?:string;
+  createdAt:string;
+}
