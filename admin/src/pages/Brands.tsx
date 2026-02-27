@@ -148,6 +148,7 @@ const Brands = () => {
   }, []);
   return (
     <div className="p-5 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Brands</h1>
         <div className="flex items-center gap-2">
@@ -171,6 +172,7 @@ const Brands = () => {
           )}
         </div>
       </div>
+      {/* Table/Content */}
       {loading ? (
         <div className="flex justify-center items-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
