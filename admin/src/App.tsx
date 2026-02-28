@@ -5,7 +5,7 @@ import {  Toaster } from "sonner";
 import authStore from "./store/useAuthStore";
 import { useState } from "react";
 import { cn } from "./lib/utils";
-
+import { motion } from "framer-motion";
 function App() {
   const {isAuthenticated}=authStore()
   const [sidebarOpen , setSidebarOpen]=useState(true)
@@ -18,12 +18,14 @@ function App() {
 
       <div className="flex bg-background">
       <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-      <div className={cn("flex flex-col flex-1 max-w-[--breakpoint-2xl] ml-64",sidebarOpen?"md:ml-64":"md:ml-20")}>
+      <motion.div className={cn("flex flex-col flex-1 ")}
+      animate={{marginLeft:sidebarOpen?256:80}}
+      transition={{ duration: 0.3, ease: "easeInOut" }}>
         <Header />
-        <main>
+        <main className="flex-1">
           <Outlet />
         </main>
-      </div>
+      </motion.div>
       
     </div>
     )}
