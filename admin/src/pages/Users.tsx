@@ -272,9 +272,7 @@ const Users = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </Button>
           {isAdmin && (
-            <Button
-              onClick={() => setIsAddModelOpen(true)}
-            >
+            <Button onClick={() => setIsAddModelOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add User
             </Button>
@@ -356,6 +354,7 @@ const Users = () => {
                         variant={"ghost"}
                         size={"icon"}
                         onClick={() => handleView(user)}
+                        className=" hover:bg-blue-50 hover:text-blue-600 flex-shrink-0"
                         title="View User Details!"
                       >
                         <Eye className="h-4 w-4" />
@@ -366,6 +365,7 @@ const Users = () => {
                             variant={"ghost"}
                             size={"icon"}
                             onClick={() => handleEdit(user)}
+                            className=" hover:bg-blue-50 hover:text-blue-600 flex-shrink-0"
                             title="Edit User Details!"
                           >
                             <Edit className="h-4 w-4" />
@@ -374,9 +374,10 @@ const Users = () => {
                             variant={"ghost"}
                             size={"icon"}
                             onClick={() => handleDelete(user)}
+                            className=" hover:bg-red-50 hover:text-red-600 flex-shrink-0"
                             title="Delete User Details!"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
                       )}
@@ -552,7 +553,6 @@ const Users = () => {
                 <Button
                   type="submit"
                   disabled={formLoading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
                 >
                   {formLoading ? (
                     <>
@@ -709,7 +709,6 @@ const Users = () => {
                 <Button
                   type="submit"
                   disabled={formLoading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
                 >
                   {formLoading ? (
                     <>
@@ -786,23 +785,40 @@ const Users = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="text-2xl">{selectedUser.name.charAt(0).toUpperCase()}</span>
+                    <span className="text-2xl">
+                      {selectedUser.name.charAt(0).toUpperCase()}
+                    </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{selectedUser.name}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {selectedUser.name}
+                  </h3>
                   <p className="text-gray-600">{selectedUser.email}</p>
-                  <Badge className={cn("capitalize mt-2",getRoleColor(selectedUser.role))}>{selectedUser.role}</Badge>
+                  <Badge
+                    className={cn(
+                      "capitalize mt-2",
+                      getRoleColor(selectedUser.role),
+                    )}
+                  >
+                    {selectedUser.role}
+                  </Badge>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-20">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                  <Label className="text-sm font-medium text-gray-600">
+                    User ID
+                  </Label>
                   <p className="text-lg font-medium">{selectedUser._id}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600" >Created At</Label>
-                  <p className="text-lg font-medium">{new Date(selectedUser.createdAt).toDateString()}</p>
+                  <Label className="text-sm font-medium text-gray-600">
+                    Created At
+                  </Label>
+                  <p className="text-lg font-medium">
+                    {new Date(selectedUser.createdAt).toDateString()}
+                  </p>
                 </div>
               </div>
             </div>

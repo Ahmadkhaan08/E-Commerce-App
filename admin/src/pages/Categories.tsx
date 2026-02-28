@@ -46,7 +46,6 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-  Users2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -63,7 +62,6 @@ const Categories = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isAddModelOpen, setIsAddModelOpen] = useState(false);
-  const [isViewModelOpen, setIsViewModelOpen] = useState(false);
   const [isDeleteModelOpen, setIsDeleteModelOpen] = useState(false);
   const [isEditModelOpen, setIsEditModelOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -310,7 +308,7 @@ const Categories = () => {
                           />
                         </div>
                       ) : (
-                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center ">
+                        <div className="h-12 w-12 rounded-full bg-indigo-200 flex items-center justify-center ">
                           {category.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -325,6 +323,7 @@ const Categories = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEdit(category)}
+                          className=" hover:bg-blue-50 hover:text-blue-600 flex-shrink-0"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -332,8 +331,9 @@ const Categories = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(category)}
+                          className=" hover:bg-red-50 hover:text-red-600 flex-shrink-0"
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 " />
                         </Button>
                       </TableCell>
                     )}
@@ -366,7 +366,7 @@ const Categories = () => {
                   size={"sm"}
                   disabled={page===1}
                   onClick={handlePreviousPage}
-                  className="cursor-pointer hover:bg-black hover:text-white"
+                  className="cursor-pointer "
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" /> Previous
                 </Button>
@@ -375,7 +375,7 @@ const Categories = () => {
                   size={"sm"}
                   onClick={handleNextPage}
                   disabled={page===totalPages}
-                  className="cursor-pointer hover:bg-black hover:text-white"
+                  className="cursor-pointer "
                 >
                   <ChevronRight className="h-4 w-4 ml-2" /> Next
                 </Button>
@@ -482,7 +482,6 @@ const Categories = () => {
                 <Button
                   type="submit"
                   disabled={formLoading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200"
                 >
                   {formLoading ? (
                     <>
@@ -632,7 +631,7 @@ const Categories = () => {
               type="submit"
               disabled={formLoading}
               onClick={handleDeleteCategory}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-red-500 hover:bg-red-700"
             >
               {formLoading ? (
                 <>

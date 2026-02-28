@@ -1,7 +1,9 @@
+import ComingSoonCard from "@/components/ComingSoon";
+
 
 const Account = () => {
   return (
-    <div>Account</div>
+    <ComingSoonCard/>
   )
 }
 

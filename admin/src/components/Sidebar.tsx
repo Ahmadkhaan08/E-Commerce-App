@@ -49,6 +49,7 @@ const Sidebar = ({ open, setOpen }: SlidebarProps) => {
   const { pathname } = useLocation();
 
   return (
+    
     <motion.aside
   className={cn(
     "fixed inset-y-0 left-0 z-20 flex flex-col border-r border-gray-800 min-h-screen bg-black",
@@ -57,6 +58,7 @@ const Sidebar = ({ open, setOpen }: SlidebarProps) => {
   initial={{ width: open ? 256 : 80 }}
   animate={{ width: open ? 256 : 80 }}
   transition={{ duration: 0.3, ease: "easeInOut" }}
+  
 >
   {/* Header */}
   <div className="flex items-center justify-center p-4 h-16 border-b border-gray-800 gap-2 bg-gray-900 text-gray-100 shadow-sm">
@@ -84,7 +86,7 @@ const Sidebar = ({ open, setOpen }: SlidebarProps) => {
   </div>
 
   {/* Nav Items */}
-  <div className="flex flex-col gap-1 flex-1 p-3">
+  <div className="flex-1 flex flex-col overflow-y-auto p-3 gap-1 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
     {NavigationsItems?.map((item) => (
       <NavItems
             key={item.to}
@@ -155,192 +157,3 @@ const NavItems = ({ to, icon, label, open, pathname, end = false }: NavItemsProp
 
 export default Sidebar;
 
-
-// import authStore from "@/store/useAuthStore";
-// import {
-//   Bookmark,
-//   ChevronLeft,
-//   ChevronRight,
-//   FileText,
-//   Layers,
-//   LayoutDashboard,
-//   LogOut,
-//   Package,
-//   ShoppingBag,
-//   Tag,
-//   User,
-//   Users,
-// } from "lucide-react";
-// import { AnimatePresence, motion } from "framer-motion";
-// import { cn } from "@/lib/utils";
-// import { Button } from "./ui/button";
-// import { NavLink, useLocation } from "react-router";
-
-// type SlidebarProps = {
-//   open: boolean;
-//   setOpen: (open: boolean) => void;
-// };
-
-// type NavItemsProps = {
-//   to: string;
-//   icon: React.ReactNode;
-//   label: string;
-//   pathname: string;
-//   open: boolean;
-//   end?: boolean;
-// };
-
-// const NavigationsItems = [
-//   { to: "/dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard", end: true },
-//   { to: "/dashboard/accounts", icon: <User size={20} />, label: "Accounts" },
-//   { to: "/dashboard/users", icon: <Users />, label: "Users" },
-//   { to: "/dashboard/orders", icon: <Package size={20} />, label: "Orders" },
-//   { to: "/dashboard/invoices", icon: <FileText size={20} />, label: "Invoices" },
-//   { to: "/dashboard/banners", icon: <Layers size={20} />, label: "Banners" },
-//   { to: "/dashboard/products", icon: <ShoppingBag size={20} />, label: "Products" },
-//   { to: "/dashboard/categories", icon: <Tag size={20} />, label: "Categories" },
-//   { to: "/dashboard/brands", icon: <Bookmark size={20} />, label: "Brands" },
-// ];
-
-// const Sidebar = ({ open, setOpen }: SlidebarProps) => {
-//   const { user, logout } = authStore();
-//   const { pathname } = useLocation();
-
-//   return (
-//     <motion.aside
-//       className={cn(
-//         "fixed inset-y-0 left-0 z-20 flex flex-col border-r border-purple-800/40 min-h-screen bg-gradient-to-b from-[#0f0c1d] via-[#1a1433] to-[#1f1a3d]",
-//         open ? "w-64" : "w-20",
-//       )}
-//       initial={{ width: open ? 256 : 80 }}
-//       animate={{ width: open ? 256 : 80 }}
-//       transition={{ duration: 0.3, ease: "easeInOut" }}
-//     >
-//       {/* Header */}
-//       <div className="flex items-center justify-center p-4 h-16 border-b border-purple-800/40 gap-2 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30 text-white shadow-md">
-//         <motion.div
-//           className={cn("flex items-center overflow-hidden", open ? "w-auto opacity-100" : "w-0 opacity-0")}
-//           initial={{ opacity: open ? 1 : 0, width: open ? "auto" : 0 }}
-//           animate={{ opacity: open ? 1 : 0, width: open ? "auto" : 0 }}
-//           transition={{ duration: 0.2 }}
-//         >
-//           <span className="font-extrabold text-xl text-pink-200 drop-shadow-lg">
-//             🧸 BabyMall Admin
-//           </span>
-//         </motion.div>
-
-//         <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-//           <Button
-//             variant="ghost"
-//             size="icon"
-//             onClick={() => setOpen(!open)}
-//             className="rounded-full bg-white/10 hover:text-pink-300 hover:bg-white/20 text-pink-200 border border-pink-400/30 shadow-sm backdrop-blur-sm"
-//           >
-//             <motion.div animate={{ rotate: open ? 0 : 180 }} transition={{ duration: 0.3 }}>
-//               {open ? <ChevronLeft size={20} /> : <ChevronRight className="rotate-180" size={20} />}
-//             </motion.div>
-//           </Button>
-//         </motion.div>
-//       </div>
-
-//       {/* Sidebar */}
-//       <div className="flex flex-col gap-1 flex-1 p-3">
-//         {NavigationsItems.map((item) => (
-//           <NavItems
-//             key={item.to}
-//             to={item.to}
-//             icon={item.icon}
-//             label={item.label}
-//             open={open}
-//             end={item.end}
-//             pathname={pathname}
-//           />
-//         ))}
-//       </div>
-
-// //       {/* Footer */}
-// //       {/* Logout */}
-// <div className="p-4 border-t border-purple-700 bg-gradient-to-r from-[#1a1433] to-[#241d44]">
-//   <motion.div
-//     className={cn(
-//       "flex items-center gap-3 mb-4",
-//       open ? "justify-start" : "justify-center"
-//     )}
-//     initial={{ opacity: 0, y: 10 }}
-//     animate={{ opacity: 1, y: 0 }}
-//     transition={{ duration: 0.3, delay: 0.2 }}
-//   >
-//     {/* User Avatar */}
-//     <div className="relative h-12 w-12 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg ring-2 ring-white/30 overflow-hidden">
-//       {user?.avatar ? (
-//         <img
-//           src={user.avatar}
-//           alt={user.name}
-//           className="rounded-full object-cover h-full w-full"
-//         />
-//       ) : (
-//         user?.name.charAt(0).toUpperCase()
-//       )}
-
-//       {/* Glow effect */}
-//       <span className="absolute inset-0 rounded-full bg-pink-400/20 blur-xl animate-pulse"></span>
-//     </div>
-
-//     {/* User Info */}
-//     <AnimatePresence>
-//       {open && (
-//         <motion.div
-//           initial={{ opacity: 0, x: -10 }}
-//           animate={{ opacity: 1, x: 0 }}
-//           exit={{ opacity: 0, x: -10 }}
-//           transition={{ duration: 0.2 }}
-//           className="flex flex-col gap-1"
-//         >
-//           <span className="text-sm capitalize text-white font-semibold truncate bg-purple-800/40 px-3 py-1 rounded-full shadow-md max-w-[160px]">
-//             {user?.name}
-//           </span>
-//           <span className="text-xs capitalize text-blue-300 font-medium bg-purple-800/40 px-3 py-1 rounded-full shadow-sm">
-//             {user?.role}
-//           </span>
-//         </motion.div>
-//       )}
-//     </AnimatePresence>
-//   </motion.div>
-
-//   {/* Logout Button */}
-//   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-//     <Button
-//       variant={"outline"}
-//       size={open ? "default" : "icon"}
-//       onClick={logout}
-//       className="flex items-center justify-center border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-white shadow-lg transition-all duration-300"
-//     >
-//       <LogOut size={16} className={cn("mr-2", !open && "mr-0")} />
-//       {open && "Logout"}
-//     </Button>
-//   </motion.div>
-// </div>
-
-// //     </motion.aside>
-// //   );
-// // };
-
-// const NavItems = ({ to, icon, label, open, pathname, end = false }: NavItemsProps) => {
-//   return (
-//     <NavLink
-//       to={to}
-//       end={end}
-//       className={cn(
-//         "flex items-center p-3 rounded-xl text-sm font-semibold gap-3 overflow-hidden text-pink-200 hover:bg-gradient-to-r hover:from-pink-400/20 hover:to-purple-400/20 hover:text-white hover:shadow-md",
-//         pathname === to
-//           ? "bg-gradient-to-r from-pink-400/40 to-purple-400/40 text-white shadow-md ring-2 ring-pink-400/40 scale-105"
-//           : "text-pink-300 hover:scale-102",
-//       )}
-//     >
-//       <span>{icon}</span>
-//       {open && label}
-//     </NavLink>
-//   );
-// };
-
-// export default Sidebar;
