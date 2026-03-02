@@ -15,6 +15,13 @@ node_modules
 /coverage
 
 # next.js
+# ./next/
+/client/.next/
+# /client/.next/
+# /client/.next/server/chunks
+
+
+# / .next
 /.next/
 /out/
 
@@ -119,3 +126,4 @@ yarn-error.log
 admin/.env
 client/.env
 server/.env
+
