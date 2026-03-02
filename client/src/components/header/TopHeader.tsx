@@ -14,7 +14,6 @@ const TopHeader = () => {
         ))}</div>
         <p className="text-center hidden md:inline-flex">100% secure delivery without contracting the courier</p>
         <div className="hidden md:inline-flex items-center justify-end">
-          Currency
           <SelectCurrency/>
           <TopSocialLinks/>
         </div>
