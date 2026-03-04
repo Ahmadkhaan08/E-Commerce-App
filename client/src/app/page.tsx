@@ -1,6 +1,7 @@
 import Container from "@/components/common/Container";
 import Banner from "@/components/home/Banner";
 import CategoriesSection from "@/components/home/CategoriesSection";
+import ProductList from "@/components/home/ProductList";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
         <CategoriesSection />
         <div className="flex-1 ">
           <Banner />
+          <ProductList/>
         </div>
         {/* Product List */}
         {/* Baby Travel Section */}
