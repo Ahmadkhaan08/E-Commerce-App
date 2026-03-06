@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/header/Header";
 import { Toaster } from "@/components/ui/sonner";
+import Footer from "@/components/footer/Footer";
 
 export const metadata: Metadata = {
   title: "Babyshop | Online shopping places",
@@ -15,15 +16,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`antialiased`}>
-        {/* Header */}
-        <Header/>
+        <Header />
         {children}
-        {/* Footer */}
-        <Toaster position="top-center" toastOptions={{
-          className:"rounded-lg shadow-lg border",
-          duration:4000
-        }}/>
-        </body>
+        <Footer />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            className: "rounded-lg shadow-lg border",
+            duration: 4000,
+          }}
+        />
+      </body>
     </html>
   );
 }
