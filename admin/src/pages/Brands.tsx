@@ -107,7 +107,7 @@ const Brands = () => {
   };
 
   const handleAddBrand = async (data: FormData) => {
-    setLoading(true);
+    setFormLoading(true);
     try {
       await axiosPrivate.post("/brands", data);
       toast.success("Brand Add Successfully!");
@@ -118,7 +118,7 @@ const Brands = () => {
       console.log("Failed to add brand", error);
       toast.error("Failed to add brand");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 

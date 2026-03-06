@@ -28,7 +28,7 @@ export interface Product {
   price: number;
   stock: number;
   averageRating: number;
-  image: string;
+  image?: string;
   category: Category;
   brand: Brand;
 }

@@ -19,7 +19,7 @@ const CategoriesSection = async () => {
       error instanceof Error ? error.message : "An unknown error occurred";
     console.log("error", error);
   }
-  console.log(categories);
+  // console.log(categories);
   // Filter the Featured and Hot Categories
   const featuredCategories = categories.filter(
     (category) => category.categoryType === "Featured",

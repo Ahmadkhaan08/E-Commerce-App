@@ -9,7 +9,7 @@ const Banner =async () => {
     try {
         const data=await fetchData<Banners[]>("/banners")
         banners=data
-        console.log(banners);
+        // console.log(banners);
     } catch (error) {
         console.log(error);
     }

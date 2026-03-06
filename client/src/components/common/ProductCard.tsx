@@ -4,6 +4,7 @@ import Link from "next/link";
 import React from "react";
 import DiscountBadge from "./DiscountBadge";
 import PriceContainer from "./PriceContainer";
+import AddToCart from "./AddToCart";
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
@@ -13,7 +14,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         className="p-2 overflow-hidden relative block"
       >
         <Image
-          src={product?.image}
+          src={product.image as string}
           alt="ProductImage"
           width={500}
           height={500}
@@ -35,6 +36,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           price={product?.price}
           discountPercentage={product?.discountPercentage}
         />
+        <AddToCart product={product} className="hover:bg-babyshopSky/20 border-babyshopSky"/>
       </div>
     </div>
   );
