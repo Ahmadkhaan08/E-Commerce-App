@@ -14,7 +14,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         className="p-2 overflow-hidden relative block"
       >
         <Image
-          src={product.image as string}
+          src={product?.image as string}
           alt="ProductImage"
           width={500}
           height={500}

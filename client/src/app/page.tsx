@@ -1,4 +1,5 @@
 import Container from "@/components/common/Container";
+import BabyTravelSection from "@/components/home/BabyTravelSection";
 import Banner from "@/components/home/Banner";
 import CategoriesSection from "@/components/home/CategoriesSection";
 import HomeBrand from "@/components/home/HomeBrand";
@@ -17,9 +18,8 @@ export default async function Home() {
           <Banner />
           <ProductList/>
           <HomeBrand brands={brands}/>
+          <BabyTravelSection/>
         </div>
-        {/* Product List */}
-        {/* Baby Travel Section */}
         {/* Confy Apparel Section */}
         {/* Featured Services Section */}
       </Container>
