@@ -5,6 +5,6 @@ import { createProduct, deleteProduct, getProductById, getProducts, rateProduct,
 const productRouter=express.Router();
 
 productRouter.route('/').post(protect,admin,createProduct).get(getProducts)
-productRouter.route("/:id").get(protect,getProductById).put(protect,admin,updateProduct).delete(protect,admin,deleteProduct)
+productRouter.route("/:id").get(getProductById).put(protect,admin,updateProduct).delete(protect,admin,deleteProduct)
 productRouter.route('/:id/rate').post(protect,rateProduct)
 export default productRouter;

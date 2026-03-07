@@ -10,7 +10,7 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <div className="border rounded-md group overflow-hidden relative w-full">
       <Link
-        href={`/products/${product?._id}`}
+        href={`/product/${product?._id}`}
         className="p-2 overflow-hidden relative block"
       >
         <Image
