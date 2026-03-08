@@ -4,6 +4,7 @@ import Container from "@/components/common/Container";
 import DiscountBadge from "@/components/common/DiscountBadge";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import ProductActions from "@/components/product/ProductActions";
+import ProductDescription from "@/components/product/ProductDescription";
 import { Button } from "@/components/ui/button";
 import { fetchData } from "@/lib/api";
 import { Product } from "@/types/type";
@@ -99,37 +100,47 @@ const SingleProductPage = async ({
               <Share2 /> <p>Share</p>
             </div>
           </div>
-        {/* Delivery part */}
-        <div className="space-y-2.5">
-          <div className="flex items-center gap-3 ">
-            <Truck size={30} />
-            <div>
-              <p className="font-medium">
-                Estimated Delivery:{" "}
-                <span className="text-sm text-babyshopBlack/70">
-                  {" "}
-                  05 - 10 March, 2026{" "}
-                </span>
-              </p>
+          {/* Delivery part */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3 ">
+              <Truck size={30} />
+              <div>
+                <p className="font-medium">
+                  Estimated Delivery:{" "}
+                  <span className="text-sm text-babyshopBlack/70">
+                    {" "}
+                    05 - 10 March, 2026{" "}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 ">
+              <Box size={30} />
+              <div>
+                <p className="font-medium">
+                  Free Shipping & Returns:{" "}
+                  <span className="text-sm text-babyshopBlack/70">
+                    {" "}
+                    On all orders over Rs 2000.00{" "}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 ">
-            <Box size={30} />
-            <div>
-              <p className="font-medium">
-                Free Shipping & Returns:{" "}
-                <span className="text-sm text-babyshopBlack/70">
-                  {" "}
-                  On all orders over Rs 2000.00{" "}
-                </span>
-              </p>
-            </div>
-        </div>
-          </div>
+          {/* Payment Image */}
           <div className="flex  flex-col items-center justify-center p-5 bg-babyshopTextLight/10 mt-3 rounded-lg">
-            <Image src={payment} alt="PaymentImage" className="w-72 sm:w-80 mb-2"/>
-            <p className="text-sm text-center text-babyshopBlack/70">Guranted safe and secure checkout</p>
+            <Image
+              src={payment}
+              alt="PaymentImage"
+              className="w-72 sm:w-80 mb-2"
+            />
+            <p className="text-sm text-center text-babyshopBlack/70">
+              Guranted safe and secure checkout
+            </p>
           </div>
+        </div>
+        <div className="max-w-screen-xl bg-babyshopWhite shadow-babyshopBlack/10 shadow-sm border border-babyshopTextLight/30 rounded-xl p-5 md:p-10 mt-5 ">
+          <ProductDescription product={product} />
         </div>
       </Container>
     </div>
