@@ -30,6 +30,12 @@ const ProductDescription = ({ product }: Props) => {
           >
             Reviews (0)
           </TabsTrigger>
+          <TabsTrigger
+            value="brand"
+            className="py-2 text-babyshopBlack hover:text-babyshopSky rounded-lg transition-all data-[state=active]:bg-babyshopSky data-[state=active]:text-babyshopWhite "
+          >
+            Questions
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </div>
