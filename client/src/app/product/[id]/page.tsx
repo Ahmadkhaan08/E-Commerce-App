@@ -43,103 +43,105 @@ const SingleProductPage = async ({
   }
   return (
     <div className="pt-5 mx-4 ">
-      <Container className="bg-babyshopWhite shadow-babyshopBlack/10 shadow-sm border border-babyshopTextLight rounded-xl grid grid-cols-1 md:grid-cols-2 gap-10 p-5 md:p-10">
-        <div>
-          <Image
-            src={product?.image}
-            alt="ProductImage"
-            width={500}
-            height={500}
-          />
-        </div>
-        <div className="sapce-y-5">
-          <DiscountBadge
-            discountPercentage={product?.discountPercentage}
-            className="w-14"
-          />
-          <ProductActions product={product} />
-          {/* price view */}
-          <div className="flex items-center justify-between gap-5">
-            <div className="flex items-center gap-2 mt-2">
-              <PriceFormatter
-                amount={product?.price}
-                className="text-babyshopTextLight line-through font-medium text-lg"
-              />
-              <PriceFormatter amount={discountedPrice} className="text-xl" />
-            </div>
-            {/* review */}
-            <div className="flex items-center gap-1.5 mt-2">
-              <div className="flex items-center text-babyshopTextLight">
-                <Star size={15} />
-                <Star size={15} />
-                <Star size={15} />
-                <Star size={15} />
-                <Star size={15} />
-              </div>
-              <p className="text-sm">({0} reviews)</p>
-            </div>
-          </div>
-          {/* user view */}
-          <p className="flex items-center gap-1 mt-2">
-            <Eye />
-            <span className="font-semibold">29</span>{" "}
-            <span className="text-babyshopBlack/70">
-              people are viewing this right now
-            </span>
-          </p>
-          <div className="flex mt-3">
-            <Button className="py-5 text-base  flex-1 bg-babyshopSky hover:bg-babyshopSky/90">
-              Buy Now
-            </Button>
-          </div>
-          <div className="flex items-center gap-5 justify-between border-b border-b-babyshopTextLight/50 pb-5 mt-3">
-            <div className="flex items-center gap-2">
-              <FileQuestion /> <p>Ask a Question</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Share2 /> <p>Share</p>
-            </div>
-          </div>
-          {/* Delivery part */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3 ">
-              <Truck size={30} />
-              <div>
-                <p className="font-medium">
-                  Estimated Delivery:{" "}
-                  <span className="text-sm text-babyshopBlack/70">
-                    {" "}
-                    05 - 10 March, 2026{" "}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 ">
-              <Box size={30} />
-              <div>
-                <p className="font-medium">
-                  Free Shipping & Returns:{" "}
-                  <span className="text-sm text-babyshopBlack/70">
-                    {" "}
-                    On all orders over Rs 2000.00{" "}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-          {/* Payment Image */}
-          <div className="flex  flex-col items-center justify-center p-5 bg-babyshopTextLight/10 mt-3 rounded-lg">
+      <Container>
+        <div className="bg-babyshopWhite shadow-babyshopBlack/10 shadow-sm border border-babyshopTextLight rounded-xl grid grid-cols-1 md:grid-cols-2 gap-10 p-5 md:p-10">
+          <div>
             <Image
-              src={payment}
-              alt="PaymentImage"
-              className="w-72 sm:w-80 mb-2"
+              src={product?.image}
+              alt="ProductImage"
+              width={500}
+              height={500}
             />
-            <p className="text-sm text-center text-babyshopBlack/70">
-              Guranted safe and secure checkout
+          </div>
+          <div className="sapce-y-5">
+            <DiscountBadge
+              discountPercentage={product?.discountPercentage}
+              className="w-14"
+            />
+            <ProductActions product={product} />
+            {/* price view */}
+            <div className="flex items-center justify-between gap-5">
+              <div className="flex items-center gap-2 mt-2">
+                <PriceFormatter
+                  amount={product?.price}
+                  className="text-babyshopTextLight line-through font-medium text-lg"
+                />
+                <PriceFormatter amount={discountedPrice} className="text-xl" />
+              </div>
+              {/* review */}
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="flex items-center text-babyshopTextLight">
+                  <Star size={15} />
+                  <Star size={15} />
+                  <Star size={15} />
+                  <Star size={15} />
+                  <Star size={15} />
+                </div>
+                <p className="text-sm">({0} reviews)</p>
+              </div>
+            </div>
+            {/* user view */}
+            <p className="flex items-center gap-1 mt-2">
+              <Eye />
+              <span className="font-semibold">29</span>{" "}
+              <span className="text-babyshopBlack/70">
+                people are viewing this right now
+              </span>
             </p>
+            <div className="flex mt-3">
+              <Button className="py-5 text-base  flex-1 bg-babyshopSky hover:bg-babyshopSky/90">
+                Buy Now
+              </Button>
+            </div>
+            <div className="flex items-center gap-5 justify-between border-b border-b-babyshopTextLight/50 pb-5 mt-3">
+              <div className="flex items-center gap-2">
+                <FileQuestion /> <p>Ask a Question</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Share2 /> <p>Share</p>
+              </div>
+            </div>
+            {/* Delivery part */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 ">
+                <Truck size={30} />
+                <div>
+                  <p className="font-medium">
+                    Estimated Delivery:{" "}
+                    <span className="text-sm text-babyshopBlack/70">
+                      {" "}
+                      05 - 10 March, 2026{" "}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 ">
+                <Box size={30} />
+                <div>
+                  <p className="font-medium">
+                    Free Shipping & Returns:{" "}
+                    <span className="text-sm text-babyshopBlack/70">
+                      {" "}
+                      On all orders over Rs 2000.00{" "}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            {/* Payment Image */}
+            <div className="flex  flex-col items-center justify-center p-5 bg-babyshopTextLight/10 mt-3 rounded-lg">
+              <Image
+                src={payment}
+                alt="PaymentImage"
+                className="w-72 sm:w-80 mb-2"
+              />
+              <p className="text-sm text-center text-babyshopBlack/70">
+                Guranted safe and secure checkout
+              </p>
+            </div>
           </div>
         </div>
-        <div className="max-w-screen-xl bg-babyshopWhite shadow-babyshopBlack/10 shadow-sm border border-babyshopTextLight/30 rounded-xl p-5 md:p-10 mt-5 ">
+        <div className="max-w-screen-xl mb-3 bg-babyshopWhite shadow-babyshopBlack/10 shadow-sm border border-babyshopTextLight/30 rounded-xl p-5 md:p-10 mt-5 ">
           <ProductDescription product={product} />
         </div>
       </Container>
