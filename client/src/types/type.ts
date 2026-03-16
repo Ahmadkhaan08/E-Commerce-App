@@ -2,7 +2,7 @@ export interface Category {
   _id: string;
   name: string;
   image: string;
-  categoryType: "Featured" | "Hot Categories" | "Top Categories";
+  categoryType: string;
 }
 
 export interface Brand {
@@ -31,21 +31,23 @@ export interface Product {
   image: string;
   category: Category;
   brand: Brand;
+  ratings: [];
+  quantity?: number;
 }
 
-export interface Address{
-    _id:string;
-    street:string;
-    city:string;
-    country:string;
-    postalCode:string;
-    isDefault:boolean;
+export interface Address {
+  _id: string;
+  street: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  isDefault: boolean;
 }
 
-export interface AddressInput{
-    street:string;
-    city:string;
-    country:string;
-    postalCode:string;
-    isDefault?:boolean;
+export interface AddressInput {
+  street: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  isDefault?: boolean;
 }
