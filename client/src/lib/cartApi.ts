@@ -26,7 +26,7 @@ export interface CartResponse {
 
 export const getUserCart = async (): Promise<CartResponse> => {
   try {
-    const response = await authApi.get("/cart");
+    const response = await authApi.get("/carts");
     if (response.success && response.data) {
       return {
         success: true,
@@ -56,7 +56,7 @@ export const addToCart = async (
   quantity: number = 1
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.post("/cart", { productId, quantity });
+    const response = await authApi.post("/carts", { productId, quantity });
     if (response.success && response.data) {
       return {
         success: true,
@@ -86,7 +86,7 @@ export const updateCartItem = async (
   quantity: number
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.put("/cart/update", { productId, quantity });
+    const response = await authApi.put("/carts/update", { productId, quantity });
     if (response.success && response.data) {
       return {
         success: true,
@@ -115,7 +115,7 @@ export const removeFromCart = async (
   productId: string
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.delete(`/cart/${productId}`);
+    const response = await authApi.delete(`/carts/${productId}`);
     if (response.success && response.data) {
       return {
         success: true,
@@ -141,7 +141,7 @@ export const removeFromCart = async (
 
 export const clearCart = async (): Promise<CartResponse> => {
   try {
-    const response = await authApi.delete("/cart");
+    const response = await authApi.delete("/carts");
     if (response.success && response.data) {
       return {
         success: true,

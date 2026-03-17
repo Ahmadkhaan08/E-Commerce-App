@@ -2,6 +2,9 @@ import asyncHandler from "express-async-handler";
 import userModel from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 
+const defaultAvatar =
+  "https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-627.jpg?w=360";
+
 //Register User
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -22,8 +25,8 @@ export const registerUser = asyncHandler(async (req, res) => {
     res.status(200).json({
       _id: newUser._id,
       name: newUser.name,
-      password: newUser.password,
       role: newUser.role,
+      avatar: newUser.avatar || defaultAvatar,
       addresses: newUser.addresses,
     });
   } else {
@@ -40,14 +43,14 @@ export const loginUser=asyncHandler(async(req,res)=>{
     const user=await userModel.findOne({email})
 
     if(user && (await user.matchPassword(password))){
-        res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            password: user.password,
-            role: user.role,
-            addresses: user.addresses,
-            token:generateToken(user._id)
-        })
+      res.status(200).json({
+        _id: user._id,
+        name: user.name,
+        role: user.role,
+        avatar: user.avatar || defaultAvatar,
+        addresses: user.addresses,
+        token:generateToken(user._id)
+      })
     }else{
         res.status(401);
         throw new Error("Invalid Credentials!");
@@ -59,14 +62,14 @@ export const userProfile=asyncHandler(async(req,res)=>{
     const user=await userModel.findById(req.user._id)
 
     if(user){
-        res.status(200).json({
-            _id: user._id,
-            name: user.name,
-            password: user.password,
-            role: user.role,
-            addresses: user.addresses,
-            token:generateToken(user._id)
-        })
+      res.status(200).json({
+        _id: user._id,
+        name: user.name,
+        role: user.role,
+        avatar: user.avatar || defaultAvatar,
+        addresses: user.addresses,
+        token:generateToken(user._id)
+      })
     }else{
         res.status(404);
         throw new Error("User not found!");
