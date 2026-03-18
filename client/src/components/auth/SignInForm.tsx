@@ -28,7 +28,7 @@ const loginSchema = z.object({
   email: z.email({ message: "Invalid Email Address!" }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 character long!" }),
+    .min(8, { message: "Password must be at least 8 character long!" }),
   termsAccepted: z.literal(true, {
     message: "You must accept the terms and privacy policy!",
   }),
@@ -55,12 +55,8 @@ const SignInForm = () => {
         email: data.email,
         password: data.password,
       });
-      console.log("Login Response:", response);
-      console.log("Response Data:", response.data);
       if (response.success && response.data) {
         const { token, ...userData } = response.data;
-        console.log("User Data (without token):", userData);
-        console.log("Avatar from userData:", userData.avatar);
         setAuthToken(token);
         updateUser(userData);
         return true;
@@ -76,13 +72,13 @@ const SignInForm = () => {
       return false;
     }
   };
-  const onSubmit :(data:LoginFormData)=>Promise<void>= async(data) => {
-    setIsLoading(true)
-    const success=await login(data)
-    if(success){
-        toast.success("Login Successfully!")
-        router.push("/")
-        setIsLoading(false)
+  const onSubmit: (data: LoginFormData) => Promise<void> = async (data) => {
+    setIsLoading(true);
+    const success = await login(data);
+    if (success) {
+      toast.success("Login Successfully!");
+      router.push("/");
+      setIsLoading(false);
     }
   };
   return (

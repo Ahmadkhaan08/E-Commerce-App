@@ -10,7 +10,7 @@ const UserButton = () => {
   // console.log(isAuthenticated,authUser)
   return (
     <Link
-      href={isAuthenticated && authUser ? "/auth/profile" : "/auth/signin"}
+      href={isAuthenticated && authUser ? "/user/profile" : "/auth/signin"}
       className="flex items-center gap-2 group hover:text-babyshopSky hoverEffect"
     >
       {isAuthenticated && authUser ? (
