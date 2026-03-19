@@ -80,6 +80,7 @@ const SignInForm = () => {
       router.push("/");
       setIsLoading(false);
     }
+    setIsLoading(false)
   };
   return (
     <motion.div

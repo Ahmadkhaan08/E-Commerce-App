@@ -7,6 +7,7 @@ import OrderIcon from "./OrderIcon";
 import WhishlistIcon from "./WhishlistIcon";
 import UserButton from "./UserButton";
 import CartIcon from "./CartIcon";
+import Sidebar from "./Sidebar";
 
 const Header = () => {
   return (
@@ -14,7 +15,7 @@ const Header = () => {
       <TopHeader />
       <Container className="flex items-center justify-between gap-10 py-4">
         <div className="flex flex-1 items-center justify-between md:justify-start md:gap-12">
-          {/* Slidebar */}
+          <Sidebar/>
           <Logo />
           <div className="md:hidden flex items-center gap-3">
             <OrderIcon /> <WhishlistIcon /> <CartIcon />

@@ -95,7 +95,7 @@ const Footer = () => {
       <HrLine/>
       {/* FooterBottom */}
       <Container className="py-5 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-5">
-        <p>© 2026 BabyMall Theme. All rights reserved.</p>
+        <p>© 2026 BabyMart Theme. All rights reserved.</p>
         <div className="flex items-center gap-2">
           <p>We are using safe payment for</p>
           <Image src={payment} alt="paymentImage" />
