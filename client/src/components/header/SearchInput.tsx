@@ -338,7 +338,7 @@ const SearchInput = () => {
                       </div>
                     </Link>
                   </div>
-                  <AddToCart product={product} />
+                  <AddToCart product={product} className="hover:bg-babyshopSky/20 border-babyshopSky" />
                 </div>
               ))}
               <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
