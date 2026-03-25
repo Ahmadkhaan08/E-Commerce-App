@@ -1,10 +1,21 @@
 "use client";
 import Container from "@/components/common/Container";
+import ProductCard from "@/components/common/ProductCard";
+import EmptyListDesign from "@/components/product/EmptyListDesign";
+import ShopSkeleton from "@/components/skeleton/ShopSkeleton";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fetchData } from "@/lib/api";
 import { Brand, Category, Product } from "@/types/type";
-import { X } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -39,15 +50,20 @@ const ShopPageClient = ({ categories, brands }: Props) => {
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
-    // Check by ID
-    const categoryExist = categories.some((cat) => cat._id === categoryFromUrl);
-    // Check By Name
-    const categoryName = categories.find(
+
+    // Always resolve to the category _id so the API receives a valid ObjectId
+    const categorybyId = categories.find((cat) => cat._id === categoryFromUrl);
+    const categorybyName = categories.find(
       (cat) =>
         cat.name.toLocaleLowerCase() === categoryFromUrl?.toLocaleLowerCase(),
     );
-    if (categoryExist || categoryName) {
-      setCategory(categoryFromUrl);
+
+    if (categorybyId) {
+      setCategory(categorybyId._id);
+      setInvalidCategory("");
+    } else if (categorybyName) {
+      setCategory(categorybyName._id);
+      setInvalidCategory("");
     } else {
       setInvalidCategory(categoryFromUrl);
       setCategory("");
@@ -216,12 +232,25 @@ const ShopPageClient = ({ categories, brands }: Props) => {
       </div>
       <div className="flex flex-col md:flex-row gap-5">
         <div className="p-5 bg-babyshopWhite w-full md:max-w-64  min-w-60 rounded-lg border">
+          {/* Small Devices */}
+          <div className="md:hidden">
+            <Button variant={"outline"} onClick={()=>setIsFiltersOpen(!isFiltersOpen)}
+              className="w-full mb-4 flex items-center justify-between border-babyshopSky">
+                <span className="font-medium">Filters</span>
+                {isFiltersOpen?(
+                  <ChevronUp size={20}/>
+                ):(
+                  <ChevronDown size={20}/>
+                )}
+              </Button>
+          </div>
           <div className="hidden md:block mb-4 ">
             <h3 className="text-lg font-semibold">Filters</h3>
           </div>
           <div
             className={`${isFiltersOpen ? "block" : "hidden"} md:block space-y-4`}
           >
+            {/* Search */}
             {search && (
               <div>
                 <h3 className="text-sm font-medium mb-3">Search</h3>
@@ -239,6 +268,7 @@ const ShopPageClient = ({ categories, brands }: Props) => {
                 </div>
               </div>
             )}
+            {/* Category */}
             <div className="mb-4">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium mb-2">
@@ -256,30 +286,210 @@ const ShopPageClient = ({ categories, brands }: Props) => {
                   </Button>
                 )}
               </div>
-              <Select value={category || "All"}
-              onValueChange={(value)=>{
-                setCategory(value==="All"?"":value)
-                setCurrentPage(1)
-                setInvalidCategory("")
-              }}
-              disabled={loading}>
+              <Select
+                value={category || "All"}
+                onValueChange={(value) => {
+                  setCategory(value === "All" ? "" : value);
+                  setCurrentPage(1);
+                  setInvalidCategory("");
+                }}
+                disabled={loading}
+              >
                 <SelectTrigger className="w-full p-2 rounded-md border">
-                  <SelectValue placeholder="Select a category"/>
+                  <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Categories</SelectLabel>
                     <SelectItem value="All">All Categories</SelectItem>
-                    {categories.map((cat:Category)=>(
-                      <SelectItem key={cat?._id} value={cat?.name}>{cat?.name}</SelectItem>
+                    {categories.map((cat: Category) => (
+                      <SelectItem key={cat?._id} value={cat?._id}>
+                        {cat?.name}
+                      </SelectItem>
                     ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Brand */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium mb-2">Brand</label>
+                {brand && (
+                  <Button
+                    variant={"link"}
+                    disabled={loading}
+                    onClick={resetBrand}
+                    className="text-xs text-blue-600 p-0"
+                    size={"sm"}
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <Select
+                value={brand || "All"}
+                onValueChange={(value) => {
+                  setBrand(value === "All" ? "" : value);
+                  setCurrentPage(1);
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full p-2 rounded-md border">
+                  <SelectValue placeholder="Select a brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Brands</SelectLabel>
+                    <SelectItem value="All">All Brands</SelectItem>
+                    {brands.map((brand: Brand) => (
+                      <SelectItem key={brand?._id} value={brand?._id}>
+                        {brand?.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Price Range */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium mb-2">
+                  Price Range
+                </label>
+                {priceRange && (
+                  <Button
+                    variant={"link"}
+                    disabled={loading}
+                    onClick={resetPriceRange}
+                    className="text-xs text-blue-600 p-0"
+                    size={"sm"}
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <Select
+                value={priceRange ? `${priceRange[0]}-${priceRange[1]}` : "All"}
+                onValueChange={(value) => {
+                  if (value === "All") {
+                    setPriceRange(null);
+                  } else {
+                    const [min, max] = value.split("-").map(Number);
+                    setPriceRange([min, max]);
+                  }
+                  setCurrentPage(1);
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full p-2 rounded-md border">
+                  <SelectValue placeholder="Select a price range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Price Range</SelectLabel>
+                    <SelectItem value="All">All Prices</SelectItem>
+                    {priceRanges.map(([min, max]) => (
+                      <SelectItem key={`${min}-${max}`} value={`${min}-${max}`}>
+                        Rs{min}-{max === Infinity ? "Above" : `Rs${max}`}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Sort Filter */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium mb-2">
+                  Sort By
+                </label>
+              </div>
+              <Select
+                value={sortOrder}
+                onValueChange={(value: "asc" | "desc") => {
+                  setSortOrder(value);
+                  setCurrentPage(1);
+                }}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full p-2 rounded-md border">
+                  <SelectValue placeholder="Sort By" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="asc">Newest First</SelectItem>
+                    <SelectItem value="desc">Oldest First</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
-        <div>Products</div>
+        <div className="bg-babyshopWhite p-5 rounded-md w-full border">
+          {loading  ? (
+            <ShopSkeleton />
+          ) : products.length > 0 ? (
+            <div className="w-full">
+              <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {products.map((product, index) => {
+                  const isNewlyLoded = newlyLoadedProducts.some(
+                    (newProducts) => newProducts._id === product._id,
+                  );
+                  return (
+                    <div
+                      key={`${product._id}-${index}`}
+                      className={`transition-all duration-700 ease-out ${isNewlyLoded ? "opacity-0 translate-y-8 scale-95" : "opacity-100 translate-y-0 scale-100"}`}
+                      style={{
+                        transitionDelay: isNewlyLoded
+                          ? `${(index % 10) * 100}ms`
+                          : "0ms",
+                      }}
+                    >
+                      <ProductCard product={product} />
+                    </div>
+                  );
+                })}
+              </div>
+              {hasMoreProducts && (
+                <div className="mt-6 flex flex-col items-center gap-4">
+                  <Button
+                    onClick={loadMoreProducts}
+                    variant={"outline"}
+                    disabled={loadingMore}
+                    className="w-full rounded-md hover:bg-babyshopSky hover:text-babyshopWhite hoverEffect py-5 mt-2"
+                  >
+                    {loadingMore ? (
+                      <Loader2 className="animate-spin " size={20} />
+                    ) : (
+                      "Load More Products"
+                    )}
+                  </Button>
+                </div>
+              )}
+              {!hasMoreProducts &&
+                products.length > 0 &&
+                total > 0 &&
+                !loadingMore && (
+                  <div className="text-center py-6 mt-6">
+                    <p className="text-gray-600 text-lg mb-2">
+                      🎉 You&apos;ve seen it all! No more products to show.
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Showing all {products.length} products.
+                    </p>
+                  </div>
+                )}
+            </div>
+          ) : (
+            !loading && (
+              <EmptyListDesign
+                message="No products match to your selected filters."
+                resetFilters={resetAllFilters}
+              />
+            )
+          )}
+        </div>
       </div>
     </Container>
   );

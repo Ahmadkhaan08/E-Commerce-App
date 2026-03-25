@@ -74,14 +74,21 @@ export const getProducts = asyncHandler(async (req, res) => {
   const query = {};
   if (category) query.category = category;
   if (brand) query.brand = brand;
-  if (priceMin || priceMax) {
+  if (priceMin !== undefined || priceMax !== undefined) {
+    const min = priceMin !== undefined ? Number(priceMin) : undefined;
+    const max = priceMax !== undefined ? Number(priceMax) : undefined;
+
+    if ((min !== undefined && Number.isNaN(min)) || (max !== undefined && Number.isNaN(max))) {
+      res.status(400);
+      throw new Error("priceMin/priceMax must be numbers");
+    }
+
     query.price = {};
-    if (priceMin) req.query.$gte = Number(priceMin);
-    if (priceMax)
-      req.query.$gte === Infinity ? Number.MAX_SAFE_INTEGER : Number(priceMax);
+    if (min !== undefined) query.price.$gte = min;
+    if (max !== undefined && Number.isFinite(max)) query.price.$lte = max;
   }
   if (search) {
-    req.name = { $regex: search, $options: "i" };
+    query.name = { $regex: search, $options: "i" };
   }
 
   const skip = (pageNumber - 1) * limitNumber;

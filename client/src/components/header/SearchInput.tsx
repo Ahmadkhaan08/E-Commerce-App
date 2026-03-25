@@ -28,7 +28,9 @@ const SearchInput = () => {
 
   const fetchFeaturedProducts = useCallback(async () => {
     try {
-      const response = await fetchData<ProductsResponse>("/products?page඿");
+      const response = await fetchData<ProductsResponse>(
+        "/products?page=1&limit=10",
+      );
       setFeaturedProducts(response.products);
     } catch (error) {
       console.error("Error fetching featured products:", error);
@@ -46,12 +48,12 @@ const SearchInput = () => {
 
     try {
       const response = await fetchData<ProductsResponse>(
-        `/products?page=1&limit=10&search=${encodeURIComponent(searchTerm)}`
+        `/products?page=1&limit=10&search=${encodeURIComponent(searchTerm)}`,
       );
       setProducts(response.products);
-    } catch {
+    } catch (err) {
       setError("Failed to fetch products");
-      console.error("Search error:", error);
+      console.error("Search error:", err);
     } finally {
       setLoading(false);
     }
@@ -338,7 +340,10 @@ const SearchInput = () => {
                       </div>
                     </Link>
                   </div>
-                  <AddToCart product={product} className="hover:bg-babyshopSky/20 border-babyshopSky" />
+                  <AddToCart
+                    product={product}
+                    className="hover:bg-babyshopSky/20 border-babyshopSky"
+                  />
                 </div>
               ))}
               <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
@@ -347,7 +352,7 @@ const SearchInput = () => {
                   onClick={() => {
                     setShowResults(false);
                   }}
-                  className="text-sm text-babyshopSky font-medium hover:underline"  
+                  className="text-sm text-babyshopSky font-medium hover:underline"
                 >
                   View all results
                 </Link>
