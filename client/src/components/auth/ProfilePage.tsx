@@ -56,7 +56,8 @@ type Address = {
   postalCode: string;
   isDefault: boolean;
 };
-
+const SHIPPING_COST=250
+const TAX_RATE=0.08 ;
 const ProfilePage = () => {
   const router = useRouter();
   const { authUser, logoutUser, auth_token, updateUser } = useUserStore();
@@ -67,12 +68,10 @@ const ProfilePage = () => {
   const [addresses, setAddresses] = useState<Address[]>(authUser?.addresses || []);
   const [addressLoading, setAddressLoading] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-
   const [selectedStatus, setSelectedStatus] = useState<"all" | "pending" | "completed" | "cancelled">("all");
   useEffect(() => {
     setAddresses(authUser?.addresses || []);
   }, [authUser]);
-
   useEffect(() => {
     if (auth_token && orders.length === 0 && !ordersLoading) {
       loadOrders(auth_token);
@@ -170,7 +169,6 @@ const ProfilePage = () => {
       setAddressLoading(false);
     }
   };
-  // const total=calculat
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 px-4 py-10">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -315,8 +313,8 @@ const ProfilePage = () => {
           <CardContent className="space-y-4">
             <Tabs value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as any)}>
               <TabsContent value={selectedStatus} className="mt-4 space-y-3">
-                {filteredOrders.length === 0 && <EmptyState message="No orders found for this filter." />}
-                {[...orders].reverse().slice(0.5).map((order) => (
+                {orders.length === 0 && <EmptyState message="No orders found for this filter." />}
+                {[...orders].reverse().slice(0,5).map((order) => (
                   <div
                     key={order._id}
                     className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between"
@@ -335,7 +333,7 @@ const ProfilePage = () => {
                       <p className="text-sm text-slate-700">Items: {order.items.length}</p>
                     </div>
                     <div className="flex flex-col gap-2 text-right">
-                        <span className="text-lg font-semibold text-slate-900">{formatCurrency(order.total)}</span>
+                        <span className="text-lg font-semibold text-slate-900">{formatCurrency((order.total * TAX_RATE) + SHIPPING_COST + order.total)}</span>
                       <div className="flex items-center justify-end gap-2">
                         <StatusBadge status={order.status as any} />
                         {order.status === "completed" && (
@@ -352,8 +350,8 @@ const ProfilePage = () => {
             </Tabs>
           </CardContent>
           <CardFooter className="justify-between text-sm text-slate-600">
-            <span>Showing {filteredOrders.length} of {orders.length} orders</span>
-            <Button variant="ghost" size="sm" onClick={() => router.push("/orders")}>View all orders</Button>
+            <span>Showing {5} of {orders.length} orders</span>
+            <Button variant="ghost" size="sm" className="hover:bg-babyshopSky/20" onClick={() => router.push("/user/orders")}>View all orders</Button>
           </CardFooter>
         </Card>
       </div>
@@ -368,7 +366,7 @@ const StatusBadge = ({ status }: { status: "pending" | "completed" | "cancelled"
     cancelled: "bg-rose-50 text-rose-800 border-rose-200",
   };
   return (
-    <Badge className={cn("capitalize", styles[status])}>{status}</Badge>
+    <Badge className={cn("capitalize p-2 rounded-full", styles[status])}>{status}</Badge>
   );
 };
 
