@@ -24,7 +24,7 @@ export const addAddress = async (
   addressData: AddressInput,
   token: string
 ): Promise<{ success: boolean; addresses: Address[]; message: string }> => {
-  const response = await fetch(`${baseURL}/users/${userId}/addresses`, {
+  const response = await fetch(`${baseURL}/users/${userId}/address`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -49,7 +49,7 @@ export const updateAddress = async (
   token: string
 ): Promise<{ success: boolean; addresses: Address[]; message: string }> => {
   const response = await fetch(
-    `${baseURL}/users/${userId}/addresses/${addressId}`,
+    `${baseURL}/users/${userId}/address/${addressId}`,
     {
       method: "PUT",
       headers: {
@@ -75,7 +75,7 @@ export const deleteAddress = async (
   token: string
 ): Promise<{ success: boolean; addresses: Address[]; message: string }> => {
   const response = await fetch(
-    `${baseURL}/users/${userId}/addresses/${addressId}`,
+    `${baseURL}/users/${userId}/address/${addressId}`,
     {
       method: "DELETE",
       headers: {

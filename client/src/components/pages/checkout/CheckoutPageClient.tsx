@@ -6,15 +6,16 @@ import CheckoutSkeleton from "@/components/skeleton/CheckoutSkeleton";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Address } from "@/lib/addressApi";
-import { getOrderById, Order } from "@/lib/orderApi";
+import { createOrderFromCart, getOrderById, Order } from "@/lib/orderApi";
 import { useCartStore, useUserStore } from "@/lib/store";
-import { CheckCircle, CreditCard, Lock } from "lucide-react";
+import { AlertCircle, CheckCircle, CreditCard, Lock } from "lucide-react";
 import Image from "next/image";
-// import { Address } from '@/types/type';
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AddressSelection from "../shop/AddressSelection";
+import { Separator } from "@/components/ui/separator";
+import { StripeCheckoutItem } from "@/lib/stripe";
 
 const CheckoutPageClient = () => {
   const [order, setOrder] = useState<Order | null>(null);
@@ -30,6 +31,7 @@ const CheckoutPageClient = () => {
   const { cartItemsWithQuantities, clearCart } = useCartStore();
   const orderId = searchParams.get("orderId");
   const TAX_RATE = 0.08;
+
   // Verify authentiaction on mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -183,7 +185,81 @@ const CheckoutPageClient = () => {
   };
 
   //   handle stripe checkout function
-  const handleStripeCheckout = async () => {};
+  const handleStripeCheckout = async () => {
+    if (!order) return;
+    if (!selectedAddress) {
+      toast.error("Please select a shipping address to continue.");
+      return;
+    }
+    setProcessing(true);
+    try {
+      let finalOrder = order;
+      // If this is a temporary order (created from cart), we need to create it in backend before checkout
+      if (order._id === "temp") {
+        setProcessing(true);
+        const orderItems = cartItemsWithQuantities.map((item) => ({
+          _id: item.product._id,
+          name: item.product.name,
+          price: item.product.price,
+          quantity: item.quantity,
+          image: item.product.image,
+        }));
+        const response = await createOrderFromCart(
+          auth_token!,
+          orderItems,
+          selectedAddress,
+        );
+        if (!response.success || !response.order) {
+          throw new Error(response.message || "Failed to create order!");
+        }
+        finalOrder = response.order;
+        setOrder(finalOrder);
+        // Clear cart after successfully order creation
+        await clearCart()
+        setIsCreatingOrder(false);
+      }
+      // Prepare items for stripe checkout
+      const stripeItems: StripeCheckoutItem[] = finalOrder?.items.map(
+        (item) => ({
+          name: item.name,
+          description: `Quanitity:${item.quantity}`,
+          amount: Math.round(item.price),
+          currency: "pkr",
+          quantity: item.quantity,
+          images: item.image ? [item.image] : undefined,
+        }),
+      );
+      // Create stripe checkout session
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: stripeItems,
+          shippingAmount: calculateShipping(),
+          taxAmount: calculateTax(),
+          customerEmail: authUser?.email || "ismail@gmail.com",
+          successUrl: `${window.location.origin}/success/orderId=${finalOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/user/checkout?orderId=${finalOrder._id}`,
+          metadata: {
+            orderId: finalOrder._id,
+            shippingAddress: JSON.stringify(selectedAddress),
+          },
+        }),
+      });
+      // console.log("response", await response.json());
+      const { url } = await response.json();
+      //Redirect to stripe checkout using the session url
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error:any) {
+      console.log("Stripe Payment Error:", error.message || error);
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   if (isLoading || authLoading) {
     return <CheckoutSkeleton />;
@@ -233,80 +309,165 @@ const CheckoutPageClient = () => {
             addresses={address}
             onAddressUpdate={handleAddressesUpdate}
           />
+          {/* Order Items */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm  p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-6 border-b border-gray-300 p-2">
               Order Details
             </h2>
-            <div>
-              {/* Order Items */}
-              <div className="space-y-4">
-                {order?.items.map((item, index) => (
-                  <div
-                    key={index.toString()}
-                    className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg"
-                  >
-                    <div className="relative w-16 h-16 bg-gray-100 rounded-lg  border border-babyshopSky overflow-hidden flex-shrink-0">
-                      {item?.image ? (
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover "
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                          <CreditCard className="h-6 w-6 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 mb-1">
-                        {item.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Quantity:{item.quantity} ×{" "}
-                        <PriceFormatter amount={item.price} />
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <PriceFormatter
-                        amount={item.price * item.quantity}
-                        className="text-base font-semibold text-gray-900"
+            {/* <div> */}
+            <div className="space-y-4">
+              {order?.items.map((item, index) => (
+                <div
+                  key={index.toString()}
+                  className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg"
+                >
+                  <div className="relative w-16 h-16 bg-gray-100 rounded-lg  border border-babyshopSky overflow-hidden flex-shrink-0">
+                    {item?.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover "
                       />
-                    </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <CreditCard className="h-6 w-6 text-gray-400" />
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-            {/* Payment Info */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              {" "}
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
-                Payment Information
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 border-2 border-blue-200 bg-blue-50 rounded-lg">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">
-                      Stripe Checkout
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 mb-1">
+                      {item.name}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Secure payment with stripe
+                      Quantity:{item.quantity} ×{" "}
+                      <PriceFormatter amount={item.price} />
                     </p>
                   </div>
-                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                  <div className="text-right">
+                    <PriceFormatter
+                      amount={item.price * item.quantity}
+                      className="text-base font-semibold text-gray-900"
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Lock className="w-4 h-4" />
-                  <span>Your payment information is secure and encrypted</span>
+              ))}
+            </div>
+          </div>
+          {/* Payment Info */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            {" "}
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Payment Information
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 border-2 border-blue-200 bg-blue-50 rounded-lg">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+                <div className="flex-1">
+                  <h3 className="font-medium text-gray-900">Stripe Checkout</h3>
+                  <p className="text-sm text-gray-600">
+                    Secure payment with stripe
+                  </p>
                 </div>
+                <CheckCircle className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Lock className="w-4 h-4" />
+                <span>Your payment information is secure and encrypted</span>
               </div>
             </div>
           </div>
         </div>
-        <div></div>
+        {/* Order Summary */}
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">
+              Order Summary
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600">Subtotal</span>
+                <PriceFormatter
+                  amount={calculateSubTotal()}
+                  className="text-base font-medium text-gray-900"
+                />
+              </div>
+
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600">Shipping</span>
+                <span className="text-base font-medium">
+                  {calculateShipping() === 0 ? (
+                    <span className="text-green-600">Free shipping</span>
+                  ) : (
+                    <PriceFormatter
+                      amount={calculateShipping()}
+                      className="text-base font-medium text-gray-900"
+                    />
+                  )}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600">Tax</span>
+                <PriceFormatter
+                  amount={calculateTax()}
+                  className="text-base font-medium text-gray-900"
+                />
+              </div>
+
+              {calculateShipping() === 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <p className="text-green-700 text-sm font-medium">
+                    🎉 You are qualify for free shipping!
+                  </p>
+                </div>
+              )}
+
+              <Separator className="my-4" />
+
+              <div className="flex justify-between items-center py-2">
+                <span className="text-lg font-bold text-gray-900">Total</span>
+                <PriceFormatter
+                  amount={calculateTotal()}
+                  className="text-xl font-bold text-gray-900"
+                />
+              </div>
+            </div>
+            <Button
+              size={"lg"}
+              className="w-full mt-6 font-semibold hover:text-babyshopWhite hoverEffect disabled:opacity-50"
+              disabled={processing || isCreatingOrder || !selectedAddress}
+              onClick={handleStripeCheckout}
+            >
+              {processing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Processing....
+                </>
+              ) : isCreatingOrder ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Creating Order....
+                </>
+              ) : !selectedAddress ? (
+                <>
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Select Address to Continue...{" "}
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Pay Securely with Stripe
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* </div> */}
     </Container>
   );
 };

@@ -27,7 +27,7 @@ const CartPageClient = () => {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const router = useRouter();
-  const TAX_RATE = 0.8;
+  const TAX_RATE = 0.08;
   useEffect(() => {
     const initializeCart = async () => {
       if (auth_token) {

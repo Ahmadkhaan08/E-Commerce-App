@@ -205,7 +205,7 @@ export const updateAddress = asyncHandler(async (req, res) => {
     user.addresses.forEach((addr) => {
       addr.isDefault = false;
     });
-    isDefault = true;
+    address.isDefault = true;
   }
 
   await user.save();
