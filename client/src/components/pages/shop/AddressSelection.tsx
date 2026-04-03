@@ -20,7 +20,7 @@ import {
 } from "@/lib/addressApi";
 import { useUserStore } from "@/lib/store";
 import { Edit, MapPin, Plus, Trash2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface AddressSelectionProps {
@@ -48,7 +48,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
   });
   const { auth_token, authUser } = useUserStore();
 
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
     setFormData({
       street: "",
       city: "",
@@ -56,7 +56,7 @@ const AddressSelection: React.FC<AddressSelectionProps> = ({
       postalCode: "",
       isDefault: addresses.length === 0, //Auto check if this is the first address
     });
-  };
+  },[addresses.length]);
 
   // update form when dialog opens
   useEffect(() => {

@@ -214,7 +214,7 @@ const CheckoutPageClient = () => {
         finalOrder = response.order;
         setOrder(finalOrder);
         // Clear cart after successfully order creation
-        await clearCart()
+        await clearCart();
         setIsCreatingOrder(false);
       }
       // Prepare items for stripe checkout
@@ -253,8 +253,15 @@ const CheckoutPageClient = () => {
       if (url) {
         window.location.href = url;
       }
-    } catch (error:any) {
-      console.log("Stripe Payment Error:", error.message || error);
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "message" in error) {
+        console.log(
+          "Stripe Payment Error:",
+          (error as { message: string }).message,
+        );
+      } else {
+        console.log("Stripe Payment Error:", error);
+      }
     } finally {
       setProcessing(false);
     }

@@ -127,7 +127,7 @@ const ShopPageClient = ({ categories, brands }: Props) => {
   useEffect(() => {
     fetchProducts();
     // setCurrentPage(1)
-  }, [category, brand, search, priceRange, sortOrder]);
+  }, [category, brand, search, priceRange, sortOrder,fetchProducts]);
 
   useEffect(() => {
     if (currentPage > 1) {

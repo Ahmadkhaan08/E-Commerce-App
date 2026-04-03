@@ -306,7 +306,7 @@ const ProfilePage = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Tabs value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as any)}>
+            <Tabs value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as "all" | "pending" | "completed" | "cancelled")}> 
               <TabsContent value={selectedStatus} className="mt-4 space-y-3">
                 {orders.length === 0 && <EmptyState message="No orders found for this filter." />}
                 {[...orders].reverse().slice(0,5).map((order) => (
@@ -330,7 +330,7 @@ const ProfilePage = () => {
                     <div className="flex flex-col gap-2 text-right">
                         <span className="text-lg font-semibold text-slate-900">{formatCurrency((order.total * TAX_RATE) + SHIPPING_COST + order.total)}</span>
                       <div className="flex items-center justify-end gap-2">
-                        <StatusBadge status={order.status as any} />
+                        <StatusBadge status={order.status as "pending" | "completed" | "cancelled" } />
                         {order.status === "completed" && (
                           <Button variant="ghost" size="sm" className="h-8" onClick={() => toast.info("Reorder coming soon")}>Reorder</Button>
                         )}
