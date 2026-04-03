@@ -14,6 +14,7 @@ import Brands from './pages/Brands.tsx'
 import Banners from './pages/Banners.tsx'
 import Invoices from './pages/Invoices.tsx'
 import Account from './pages/Account.tsx'
+import { Toaster } from 'sonner'
 
 const router=createBrowserRouter([
   {path:"/login",element:<Login/>},
@@ -51,7 +52,10 @@ const router=createBrowserRouter([
   ]}])
 
 createRoot(document.getElementById('root')!).render(
-  <RouterProvider router={router}/>
+  <>
+    <Toaster position="top-center" />
+    <RouterProvider router={router}/>
+  </>
   // <StrictMode>
   //   <App />
   // </StrictMode>,

@@ -4,6 +4,7 @@ import type { StatsData } from "@/lib/type";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useLocation, useNavigate } from "react-router";
 import StatsCard from "@/components/StatsCard";
 import {
   Bookmark,
@@ -62,6 +63,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(false);
   const axiosPrivate = useAxiosPrivate();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PK", {
@@ -87,6 +90,21 @@ const Dashboard = () => {
 
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    const toastState = (location.state as { toast?: { type?: string; message?: string } } | null)?.toast;
+    if (!toastState?.message) return;
+
+    if (toastState.type === "error") {
+      toast.error(toastState.message);
+    } else {
+      toast.success(toastState.message);
+    }
+
+    // Clear transient navigation state so toast is not replayed on refresh/back.
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
+
   return (
     <motion.div
       className="bg-gradient-to-br from-gray-50 to-gray-100 p-6"
