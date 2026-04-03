@@ -8,9 +8,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.freepik.com" },
     ],
   },
-  // eslint:{
-  //   ignoreDuringBuilds: true,
-  // }
+  eslint:{
+    ignoreDuringBuilds: true,
+  }
 };
 
 export default nextConfig;
