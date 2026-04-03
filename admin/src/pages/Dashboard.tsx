@@ -48,16 +48,16 @@ const cardVariants = {
     transition: { duration: 0.5, ease: "easeOut" as const },
   },
 };
-const CustomBar = ({ x, y, width, height, index }: any) => (
-  <rect
-    x={x}
-    y={y}
-    width={width}
-    height={height}
-    fill={COLORS[index % COLORS.length]} // same logic as Cell
-    rx={4} // optional: rounded corners
-  />
-);
+// const CustomBar = ({ x, y, width, height, index }: any) => (
+//   <rect
+//     x={x}
+//     y={y}
+//     width={width}
+//     height={height}
+//     fill={COLORS[index % COLORS.length]} // same logic as Cell
+//     rx={4} // optional: rounded corners
+//   />
+// );
 const Dashboard = () => {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(false);
