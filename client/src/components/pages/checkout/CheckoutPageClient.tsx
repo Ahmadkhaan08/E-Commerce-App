@@ -214,7 +214,7 @@ const CheckoutPageClient = () => {
         finalOrder = response.order;
         setOrder(finalOrder);
         // Clear cart after successfully order creation
-        await clearCart();
+        // await clearCart();
         setIsCreatingOrder(false);
       }
       // Prepare items for stripe checkout
