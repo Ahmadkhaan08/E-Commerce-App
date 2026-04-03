@@ -26,7 +26,7 @@ export interface CartResponse {
 
 export const getUserCart = async (): Promise<CartResponse> => {
   try {
-    const response = await authApi.get("/carts");
+    const response = await authApi.get<CartResponse>("/carts");
     if (response.success && response.data) {
       return {
         success: true,
@@ -56,7 +56,7 @@ export const addToCart = async (
   quantity: number = 1
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.post("/carts", { productId, quantity });
+    const response = await authApi.post<CartResponse>("/carts", { productId, quantity });
     if (response.success && response.data) {
       return {
         success: true,
@@ -86,12 +86,12 @@ export const updateCartItem = async (
   quantity: number
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.put("/carts/update", { productId, quantity });
+    const response = await authApi.put<CartResponse>("/carts/update", { productId, quantity });
     if (response.success && response.data) {
       return {
         success: true,
-        cart: response.data.cart || [],
-        message: response.data.message || "Cart item updated successfully",
+        cart: response.data?.cart || [],
+        message: response.data?.message || "Cart item updated successfully",
       };
     } else {
       return {
@@ -115,7 +115,7 @@ export const removeFromCart = async (
   productId: string
 ): Promise<CartResponse> => {
   try {
-    const response = await authApi.delete(`/carts/${productId}`);
+    const response = await authApi.delete<CartResponse>(`/carts/${productId}`);
     if (response.success && response.data) {
       return {
         success: true,
@@ -141,7 +141,7 @@ export const removeFromCart = async (
 
 export const clearCart = async (): Promise<CartResponse> => {
   try {
-    const response = await authApi.delete("/carts");
+    const response = await authApi.delete<CartResponse>("/carts");
     if (response.success && response.data) {
       return {
         success: true,
