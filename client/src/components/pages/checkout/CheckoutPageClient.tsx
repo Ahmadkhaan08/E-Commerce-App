@@ -3,7 +3,6 @@ import Container from "@/components/common/Container";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import PriceFormatter from "@/components/common/PriceFormatter";
 import CheckoutSkeleton from "@/components/skeleton/CheckoutSkeleton";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Address } from "@/lib/addressApi";
 import { createOrderFromCart, getOrderById, Order } from "@/lib/orderApi";

@@ -9,7 +9,7 @@ interface CategoryResponse {
 }
 const CategoriesSection = async () => {
   let categories: Category[] = [];
-  let error: string | null = null;
+  // let error: string | null = null;
   try {
     const data = await fetchData<CategoryResponse>("/categories");
     categories = data?.category;

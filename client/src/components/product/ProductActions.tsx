@@ -1,6 +1,6 @@
 "use client";
 import { Product } from "@/types/type";
-import { Minus, Plus, Star } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import React, { useState } from "react";
 import WishlistButton from "./WishlistButton";
 import { Button } from "../ui/button";
@@ -10,7 +10,7 @@ interface Props {
 }
 const ProductActions: React.FC<Props> = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
-  const [localLoading, setLocalLoading] = useState(false);
+  // const [localLoading, setLocalLoading] = useState(false);
   const handleQuantityChange = (type: "increase" | "decrease") => {
     if (type === "increase") {
       setQuantity((prev) => prev + 1);

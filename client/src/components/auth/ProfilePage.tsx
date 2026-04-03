@@ -24,14 +24,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useOrderStore, useUserStore } from "@/lib/store";
 import authApi from "@/lib/authApi";
 import { addAddress, deleteAddress, updateAddress } from "@/lib/addressApi";
-import { Order } from "@/lib/orderApi";
 import { toast } from "sonner";
 import {
   BadgeCheck,
@@ -39,12 +37,9 @@ import {
   Loader2,
   LogOut,
   Mail,
-  MapPin,
   Pencil,
-  Phone,
   Plus,
   ShoppingBag,
-  Trash,
   Trash2,
 } from "lucide-react";
 
@@ -63,7 +58,7 @@ const ProfilePage = () => {
   const { authUser, logoutUser, auth_token, updateUser } = useUserStore();
   const { orders, isLoading: ordersLoading, loadOrders } = useOrderStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  // const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>(authUser?.addresses || []);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -85,16 +80,16 @@ const ProfilePage = () => {
       minimumFractionDigits: 0,
     }).format(value || 0);
 
-  const filteredOrders = useMemo(() => {
-    const normalized = orders.reverse()?.map((o) => ({
-      ...o,
-      uiStatus: o.status === "paid" ? "completed" : o.status,
-    }));
-    if (selectedStatus === "all") return normalized;
-    return normalized.filter((o) => o.uiStatus === selectedStatus);
+  // const filteredOrders = useMemo(() => {
+  //   const normalized = orders.reverse()?.map((o) => ({
+  //     ...o,
+  //     uiStatus: o.status === "paid" ? "completed" : o.status,
+  //   }));
+  //   if (selectedStatus === "all") return normalized;
+  //   return normalized.filter((o) => o.uiStatus === selectedStatus);
     
 
-  }, [orders, selectedStatus]);
+  // }, [orders, selectedStatus]);
 
 
   const profileCompletion = useMemo(() => {

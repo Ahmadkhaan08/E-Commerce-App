@@ -180,10 +180,10 @@ const ShopPageClient = ({ categories, brands }: Props) => {
     setPriceRange(null);
     setCurrentPage(1);
   };
-  const resetSortOrder = () => {
-    setSortOrder("asc");
-    setCurrentPage(1);
-  };
+  // const resetSortOrder = () => {
+  //   setSortOrder("asc");
+  //   setCurrentPage(1);
+  // };
   const resetAllFilters = () => {
     setCategory("");
     setBrand("");

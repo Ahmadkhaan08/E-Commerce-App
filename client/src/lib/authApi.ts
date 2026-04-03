@@ -5,7 +5,7 @@ type ApiError = {
   code: string | number;
 };
 
-type ApiResponse<T=any> = {
+type ApiResponse<T=unknown> = {
   success: boolean;
   data?: T;
   error?: ApiError;

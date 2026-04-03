@@ -8,6 +8,7 @@ import AddToCart from "../common/AddToCart";
 import { Product } from "@/types/type";
 import { fetchData } from "@/lib/api";
 import { Input } from "../ui/input";
+import Image from "next/image";
 
 interface ProductsResponse {
   products: Product[];
@@ -189,7 +190,7 @@ const SearchInput = () => {
                           >
                             {product.image && (
                               <div className="w-12 h-12 bg-gray-50 rounded flex-shrink-0 overflow-hidden">
-                                <img
+                                <Image
                                   src={product.image}
                                   alt={product.name}
                                   className="object-contain w-full h-full"
@@ -315,7 +316,7 @@ const SearchInput = () => {
                     >
                       {product.image && (
                         <div className="w-12 h-12 bg-gray-50 rounded flex-shrink-0 overflow-hidden">
-                          <img
+                          <Image
                             src={product.image}
                             alt={product.name}
                             className="object-contain w-full h-full"
