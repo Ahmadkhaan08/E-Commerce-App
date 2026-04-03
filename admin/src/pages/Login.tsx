@@ -81,7 +81,7 @@ const Login = () => {
     }
     // Clear navigation state so toast is not replayed
     navigate(location.pathname, { replace: true, state: null });
-  }, [location.pathname, location.state]);
+  }, [location.pathname, location.state, navigate]);
 
   return (
     <>
