@@ -1,4 +1,3 @@
-import type { title } from "process";
 import { z } from "zod";
 
 export const registerSchema = z.object({

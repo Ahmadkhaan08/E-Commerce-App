@@ -39,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { Edit, Loader2, Plus, Trash, RefreshCw, Trash2 } from "lucide-react";
+import { Edit, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { bannerSchema } from "@/lib/validation";
 import type { Banner } from "@/lib/type";
 import { toast } from "sonner";
