@@ -251,7 +251,7 @@ export const useUserStore = create<UserState>()(
         }
 
         try {
-          const response = await authApi.get("/auth/profile");
+          const response = await authApi.get<User>("/auth/profile");
 
           if (response.data) {
             set({

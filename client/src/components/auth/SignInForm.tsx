@@ -35,6 +35,17 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
+
+type User = {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+type AuthResponse = {
+  token: string;
+} & User;
 const SignInForm = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -56,9 +67,9 @@ const SignInForm = () => {
         password: data.password,
       });
       if (response.success && response.data) {
-        const { token, ...userData } = response.data;
+        const { token , ...userData } = response.data  as AuthResponse; ;
         setAuthToken(token);
-        updateUser(userData);
+        updateUser(userData );
         return true;
       } else {
         toast.error(
