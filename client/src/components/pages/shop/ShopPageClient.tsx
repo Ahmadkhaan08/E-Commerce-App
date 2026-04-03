@@ -418,8 +418,8 @@ const ShopPageClient = ({ categories, brands }: Props) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="asc">Newest First</SelectItem>
-                    <SelectItem value="desc">Oldest First</SelectItem>
+                    <SelectItem value="desc">Newest First</SelectItem>
+                    <SelectItem value="asc">Oldest First</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
