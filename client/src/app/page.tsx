@@ -10,19 +10,25 @@ import { fetchData } from "@/lib/api";
 import { Brand } from "@/types/type";
 
 export default async function Home() {
-  const brands=await fetchData<Brand[]>("/brands")
-  // console.log(brands)
+  let brands: Brand[] = [];
+
+  try {
+    brands = await fetchData<Brand[]>("/brands");
+  } catch (error) {
+    console.error("Failed to load brands for home page:", error);
+  }
+
   return (
     <div>
       <Container className="min-h-screen flex py-7 gap-3">
         <CategoriesSection />
         <div className="flex-1 ">
           <Banner />
-          <ProductList/>
-          <HomeBrand brands={brands}/>
-          <BabyTravelSection/>
-          <ComfyApparelSection/>
-          <FeaturedServicesSection/>
+          <ProductList />
+          <HomeBrand brands={brands} />
+          <BabyTravelSection />
+          <ComfyApparelSection />
+          <FeaturedServicesSection />
         </div>
       </Container>
     </div>
