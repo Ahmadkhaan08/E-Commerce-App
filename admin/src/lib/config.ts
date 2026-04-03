@@ -71,7 +71,8 @@ export const createApiInsatnce = (): AxiosInstance => {
       // Handle 401 unauthorized errors
       if (error.response?.status === 401) {
         localStorage.removeItem("auth-storage");
-        window.location.href = "/login";
+        // Do not force redirect; let UI handle it for login page toasts
+        // window.location.href = "/login";
       }
       return Promise.reject(error);
     },

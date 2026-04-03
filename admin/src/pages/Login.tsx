@@ -18,8 +18,8 @@ import { Meteors } from "@/components/ui/meteors";
 import { loginSchema } from "@/lib/validation";
 import authStore from "@/store/useAuthStore";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { z } from "zod";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,7 +32,6 @@ type FormData = z.infer<typeof loginSchema>;
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { login } = authStore();
   const form = useForm<FormData>({
     resolver: zodResolver(loginSchema),
@@ -56,32 +55,12 @@ const Login = () => {
       });
     } catch (error) {
       console.log("Failed to login", error);
-      // Instead of showing toast immediately, pass error in navigation state
-      navigate("/login", {
-        replace: true,
-        state: {
-          toast: {
-            type: "error",
-            message: "Invalid Credentials! Please try again.",
-          },
-        },
-      });
+      toast.error("Invalid Credentials. Please Try Again!");
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const toastState = (location.state as { toast?: { type?: string; message?: string } } | null)?.toast;
-    if (!toastState?.message) return;
-    if (toastState.type === "error") {
-      toast.error(toastState.message);
-    } else {
-      toast.success(toastState.message);
-    }
-    // Clear navigation state so toast is not replayed
-    navigate(location.pathname, { replace: true, state: null });
-  }, [location.pathname, location.state, navigate]);
 
   return (
     <>
