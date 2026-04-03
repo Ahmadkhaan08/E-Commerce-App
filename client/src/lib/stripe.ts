@@ -1,5 +1,4 @@
 import { loadStripe } from "@stripe/stripe-js";
-
 // This should be your Stripe publishable key
 const stripePublishableKey =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
@@ -53,19 +52,30 @@ export const createCheckoutSession = async (
 };
 
 // Redirect to Stripe Checkout
-export const redirectToCheckout = async (sessionId: string) => {
-  const stripe = await stripePromise;
+// export const redirectToCheckout = async (sessionId: string) => {
+//   const stripe: Stripe | null = await stripePromise;
 
-  if (!stripe) {
-    throw new Error("Stripe failed to load");
+//   if (!stripe) {
+//     throw new Error("Stripe failed to load");
+//   }
+
+//   const { error } = await stripe.redirectToCheckout({
+//     sessionId,
+//   });
+
+//   if (error) {
+//     console.error("Error redirecting to checkout:", error);
+//     throw error;
+//   }
+// };
+export const redirectToCheckout = async (checkoutUrl: string) => {
+  if (!checkoutUrl) {
+    throw new Error("Checkout URL is required");
   }
 
-  const { error } = await stripe.redirectToCheckout({
-    sessionId,
-  });
-
-  if (error) {
-    console.error("Error redirecting to checkout:", error);
-    throw error;
+  if (typeof window === "undefined") {
+    throw new Error("Checkout redirect must run in the browser");
   }
+
+  window.location.assign(checkoutUrl);
 };
