@@ -10,19 +10,24 @@ interface ApiConfig {
 export const getApiConfig = (): ApiConfig => {
   // Check if we are in browser or server environment
   const isClient = typeof window !== "undefined";
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    process.env.NEXT_PUBLIC_APP_ENV === "production";
 
   let baseUrl: string;
   if (isClient) {
     // Client Side
-    baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    const clientApiUrl =
+      process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_ENDPOINT;
+    baseUrl = clientApiUrl || (isProduction ? "" : "http://localhost:8000/api");
   } else {
     // Server Side
-    baseUrl = process.env.API_ENDPOINT || "http://localhost:8000/api";
+    const serverApiUrl =
+      process.env.API_ENDPOINT ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_ENDPOINT;
+    baseUrl = serverApiUrl || (isProduction ? "" : "http://localhost:8000/api");
   }
-
-  const isProduction =
-    process.env.NODE_ENV === "production" ||
-    process.env.NEXT_PUBLIC_APP_ENV === "production";
   return {
     baseUrl,
     isProduction,
@@ -37,10 +42,15 @@ export async function fetchWithConfig<T>(
   options?: RequestInit,
 ): Promise<T> {
   const { baseUrl } = getApiConfig();
+  if (!baseUrl) {
+    throw new Error(
+      "API base URL is not configured. Set NEXT_PUBLIC_API_URL (and API_ENDPOINT for server-side requests).",
+    );
+  }
   const url = `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   const defaultOptions: RequestInit = {
     headers: {
-      "Content-Type": "appllication/json",
+      "Content-Type": "application/json",
     },
     next: { revalidate: 100 },
   };
@@ -73,7 +83,7 @@ export async function fetchWithConfig<T>(
  */
 export const getAuthHeader = (token?: string): Record<string, string> => {
   const headers: Record<string, string> = {
-    "Content-Type": "appllication/json",
+    "Content-Type": "application/json",
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;

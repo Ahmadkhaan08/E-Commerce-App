@@ -12,7 +12,17 @@ const getUser = async () => {
     return null;
   }
   try {
-    const baseUrl = process.env.API_ENDPOINT || "http://localhost:8000/api";
+    const isProduction = process.env.NODE_ENV === "production";
+    const baseUrl =
+      process.env.API_ENDPOINT ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_ENDPOINT ||
+      (isProduction ? "" : "http://localhost:8000/api");
+
+    if (!baseUrl) {
+      return null;
+    }
+
     const response = await fetch(`${baseUrl}/auth/profile`, {
       method: "GET",
       headers: {

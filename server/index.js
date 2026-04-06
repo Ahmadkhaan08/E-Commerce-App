@@ -28,6 +28,7 @@ const app = express();
 const allowedOrigins = [
   process.env.ADMIN_URL,
   process.env.CLIENT_URL,
+  "https://babymart-sigma.vercel.app",
   "https://babymartadmin.vercel.app",
   "https://babymartclient.vercel.app",
   // Add production URLs
@@ -41,6 +42,8 @@ const allowedOrigins = [
   // "http://192.168.1.100:8081", // Replace with your actual local IP for physical devices
 ].filter(Boolean); // Remove any undefined values
 
+const allowedOriginPatterns = [/^https:\/\/babymart-.*\.vercel\.app$/i];
+
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -51,7 +54,11 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    const isAllowedByPattern = allowedOriginPatterns.some((pattern) =>
+      pattern.test(origin),
+    );
+
+    if (allowedOrigins.includes(origin) || isAllowedByPattern) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
