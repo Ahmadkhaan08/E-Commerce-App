@@ -29,20 +29,22 @@ export interface CheckoutSessionRequest {
 
 // Create a checkout session
 export const createCheckoutSession = async (
-  data: CheckoutSessionRequest
+  data: CheckoutSessionRequest,
 ): Promise<{ sessionId: string } | { error: string }> => {
   try {
-    // Use fetchWithConfig to ensure correct base URL in all environments
-    const { sessionId } = await fetchWithConfig<{ sessionId: string }>(
-      "/create-checkout-session",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create checkout session");
+    }
+
+    const { sessionId } = await response.json();
     return { sessionId };
   } catch (error) {
     console.error("Error creating checkout session:", error);
@@ -51,30 +53,23 @@ export const createCheckoutSession = async (
 };
 
 // Redirect to Stripe Checkout
-// export const redirectToCheckout = async (sessionId: string) => {
-//   const stripe: Stripe | null = await stripePromise;
-
-//   if (!stripe) {
-//     throw new Error("Stripe failed to load");
-//   }
-
-//   const { error } = await stripe.redirectToCheckout({
-//     sessionId,
-//   });
-
-//   if (error) {
-//     console.error("Error redirecting to checkout:", error);
-//     throw error;
-//   }
-// };
+// Modern approach: use the session URL directly from your backend
 export const redirectToCheckout = async (checkoutUrl: string) => {
   if (!checkoutUrl) {
     throw new Error("Checkout URL is required");
   }
 
-  if (typeof window === "undefined") {
-    throw new Error("Checkout redirect must run in the browser");
-  }
-
-  window.location.assign(checkoutUrl);
+  // Redirect to the Stripe Checkout page
+  window.location.href = checkoutUrl;
 };
+// export const redirectToCheckout = async (checkoutUrl: string) => {
+//   if (!checkoutUrl) {
+//     throw new Error("Checkout URL is required");
+//   }
+
+//   if (typeof window === "undefined") {
+//     throw new Error("Checkout redirect must run in the browser");
+//   }
+
+//   window.location.assign(checkoutUrl);
+// };
