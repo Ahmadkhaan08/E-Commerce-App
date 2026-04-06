@@ -62,6 +62,7 @@ export const redirectToCheckout = async (checkoutUrl: string) => {
   // Redirect to the Stripe Checkout page
   window.location.href = checkoutUrl;
 };
+
 // export const redirectToCheckout = async (checkoutUrl: string) => {
 //   if (!checkoutUrl) {
 //     throw new Error("Checkout URL is required");

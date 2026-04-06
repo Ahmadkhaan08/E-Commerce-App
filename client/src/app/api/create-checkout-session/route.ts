@@ -17,6 +17,23 @@ interface StripeCheckoutItem {
   images?: string[];
 }
 
+// Helper to fetch PKR to USD exchange rate
+async function getPkrToUsdRate() {
+  try {
+    // Example using exchangerate-api.com (replace with your preferred API)
+    const res = await fetch("https://open.er-api.com/v6/latest/PKR");
+    const data = await res.json();
+    if (data && data.rates && data.rates.USD) {
+      return data.rates.USD;
+    }
+    throw new Error("USD rate not found");
+  } catch (e) {
+    console.error("Failed to fetch PKR to USD rate", e);
+    // Fallback to a hardcoded rate if needed
+    return 0.0036; // Example fallback rate
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const {
@@ -28,6 +45,9 @@ export async function POST(req: NextRequest) {
       shippingAmount,
       taxAmount,
     } = await req.json();
+
+    // Fetch the latest PKR to USD rate
+    const pkrToUsd = await getPkrToUsdRate();
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -43,15 +63,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert all PKR prices to USD cents for Stripe
     const lineItems = items.map((item: StripeCheckoutItem) => {
-      const amountMinor = Math.max(
-        0,
-        Math.round(Number(item.amount ?? 0) * 100), // convert to smallest currency unit
-      );
-
+      // Convert PKR to USD, then to cents
+      const usdAmount = Number(item.amount ?? 0) * pkrToUsd;
+      const amountMinor = Math.max(0, Math.round(usdAmount * 100));
       return {
         price_data: {
-          currency: (item.currency || "pkr").toLowerCase(),
+          currency: "usd",
           product_data: {
             name: item.name,
             description: item.description,
@@ -63,17 +82,20 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    // Convert shipping and tax to USD cents
     const shippingMinor = Math.max(
       0,
-      Math.round(Number(shippingAmount ?? 0) * 100),
+      Math.round(Number(shippingAmount ?? 0) * pkrToUsd * 100),
     );
-
-    const taxMinor = Math.max(0, Math.round(Number(taxAmount ?? 0) * 100));
+    const taxMinor = Math.max(
+      0,
+      Math.round(Number(taxAmount ?? 0) * pkrToUsd * 100),
+    );
 
     if (shippingMinor > 0) {
       lineItems.push({
         price_data: {
-          currency: lineItems[0]?.price_data.currency || "pkr",
+          currency: "usd",
           product_data: {
             name: "Shipping",
             description: "Shipping charges",
@@ -88,7 +110,7 @@ export async function POST(req: NextRequest) {
     if (taxMinor > 0) {
       lineItems.push({
         price_data: {
-          currency: lineItems[0]?.price_data.currency || "pkr",
+          currency: "usd",
           product_data: {
             name: "Tax",
             description: "Tax charges",
@@ -123,8 +145,8 @@ export async function POST(req: NextRequest) {
       billing_address_collection: "auto",
       shipping_address_collection: { allowed_countries: ["PK"] },
     });
-console.log("session:",session?.url)
-    return NextResponse.json({ success: true, url:session?.url });
+    console.log("session:", session?.url);
+    return NextResponse.json({ success: true, url: session?.url });
   } catch (error) {
     if (error instanceof Stripe.errors.StripeError) {
       console.error("Stripe error:", error.raw);
