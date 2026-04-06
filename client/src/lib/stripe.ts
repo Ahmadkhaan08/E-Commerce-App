@@ -1,4 +1,5 @@
 import { loadStripe } from "@stripe/stripe-js";
+import { fetchWithConfig } from "./config";
 // This should be your Stripe publishable key
 const stripePublishableKey =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
@@ -31,19 +32,17 @@ export const createCheckoutSession = async (
   data: CheckoutSessionRequest
 ): Promise<{ sessionId: string } | { error: string }> => {
   try {
-    const response = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to create checkout session");
-    }
-
-    const { sessionId } = await response.json();
+    // Use fetchWithConfig to ensure correct base URL in all environments
+    const { sessionId } = await fetchWithConfig<{ sessionId: string }>(
+      "/create-checkout-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
     return { sessionId };
   } catch (error) {
     console.error("Error creating checkout session:", error);
