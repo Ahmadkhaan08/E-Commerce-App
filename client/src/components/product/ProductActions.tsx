@@ -2,7 +2,7 @@
 import { Product } from "@/types/type";
 import { Minus, Plus } from "lucide-react";
 import React, { useState } from "react";
-import WishlistButton from "./WishlistButton";
+import WishlistButton from "../common/WishlistButton";
 import { Button } from "../ui/button";
 
 interface Props {
@@ -26,7 +26,10 @@ const ProductActions: React.FC<Props> = ({ product }) => {
           {product?.name}
         </h1>
         <div className="flex items-center gap-2">
-          <WishlistButton className="border border-babyshopTextLight hover:border-babyshopSky" />
+          <WishlistButton
+            product={product}
+            className="border border-babyshopTextLight hover:border-babyshopSky"
+          />
         </div>
       </div>
 

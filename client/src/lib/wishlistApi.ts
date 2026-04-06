@@ -1,3 +1,5 @@
+import { Product } from "@/types/type";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.NEXT_PUBLIC_API_ENDPOINT ||
@@ -11,7 +13,7 @@ export interface WishlistResponse {
 
 export interface WishlistProductsResponse {
   success: boolean;
-  products: [];
+  products: Product[];
   message?: string;
 }
 
@@ -103,7 +105,7 @@ export const getWishlistProducts = async (
   token: string
 ): Promise<WishlistProductsResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/wishlist/products`, {
+    const response = await fetch(`${API_BASE_URL}/wishlist/get-products`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -130,7 +132,7 @@ export const clearWishlist = async (
   token: string
 ): Promise<WishlistResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/wishlist/clear`, {
+    const response = await fetch(`${API_BASE_URL}/wishlist/remove-all`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

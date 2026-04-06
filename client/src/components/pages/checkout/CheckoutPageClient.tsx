@@ -298,7 +298,7 @@ const CheckoutPageClient = () => {
   return (
     <Container className="py-8">
       <PageBreadCrumb
-        items={[{ label: "Cart", href: "/cart" }]}
+        items={[{ label: "Cart", href: "/user/cart" }]}
         currentPage="Checkout"
       />
       <div className="mb-8">
