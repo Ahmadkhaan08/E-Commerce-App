@@ -11,16 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getOrderById, updateOrderStatus } from "@/lib/orderApi";
+import { useOrderStore, useUserStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Clock, CreditCard, Inbox, Receipt, Shield } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const SuccessPageClient = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const { auth_token } = useUserStore();
+  const { updateOrder } = useOrderStore();
+
+  const [syncState, setSyncState] = useState<"idle" | "syncing" | "synced" | "already" | "failed">("idle");
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   const orderIdFromQuery = searchParams.get("orderId");
   const sessionId = searchParams.get("session_id");
@@ -36,6 +43,73 @@ const SuccessPageClient = () => {
 
   const orderId = orderIdFromQuery || orderIdFromPath;
   const amount = amountParam ? Number(amountParam) : null;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const markOrderAsPaid = async () => {
+      if (!orderId || !auth_token) {
+        return;
+      }
+
+      setSyncState("syncing");
+      setSyncMessage("Finalizing your order payment status...");
+
+      try {
+        const currentOrder = await getOrderById(orderId, auth_token);
+
+        if (!currentOrder) {
+          throw new Error("Order not found while confirming payment.");
+        }
+
+        const normalizedStatus = currentOrder.status?.toLowerCase();
+        if (
+          normalizedStatus === "paid" ||
+          normalizedStatus === "completed" ||
+          Boolean(currentOrder.paidAt)
+        ) {
+          if (!isCancelled) {
+            setSyncState("already");
+            setSyncMessage("Order status is already marked as paid.");
+          }
+          return;
+        }
+
+        const result = await updateOrderStatus(
+          orderId,
+          "paid",
+          auth_token,
+          undefined,
+          sessionId || undefined,
+        );
+
+        if (!result.success || !result.order) {
+          throw new Error(result.message || "Failed to update order payment status.");
+        }
+
+        if (!isCancelled) {
+          updateOrder(result.order);
+          setSyncState("synced");
+          setSyncMessage("Order status updated to paid.");
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setSyncState("failed");
+          setSyncMessage(
+            error instanceof Error
+              ? error.message
+              : "Payment succeeded, but order status sync is pending.",
+          );
+        }
+      }
+    };
+
+    void markOrderAsPaid();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [orderId, auth_token, sessionId, updateOrder]);
 
   const formattedDate = useMemo(
     () =>
@@ -71,6 +145,16 @@ const SuccessPageClient = () => {
               <div>
                 <CardTitle className="text-xl text-slate-900">Order confirmed</CardTitle>
                 <p className="text-sm text-slate-600">Order ID {orderId || "—"}</p>
+                {syncMessage && (
+                  <p
+                    className={cn(
+                      "mt-1 text-xs",
+                      syncState === "failed" ? "text-amber-600" : "text-emerald-600",
+                    )}
+                  >
+                    {syncMessage}
+                  </p>
+                )}
               </div>
             </div>
             <Badge variant="outline" className="text-slate-700 border-slate-200 bg-slate-50">
@@ -109,7 +193,7 @@ const SuccessPageClient = () => {
                   />
                   <DetailRow
                     label="Status"
-                    value="Succeeded"
+                    value={syncState === "failed" ? "Sync pending" : "Succeeded"}
                     icon={<Shield className="h-4 w-4 text-emerald-600" />}
                   />
                   <DetailRow

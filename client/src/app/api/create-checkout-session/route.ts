@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import Stripe from "stripe";
+import { FALLBACK_RATES } from "@/lib/currency";
 
 const secretKey = process.env.STRIPE_SECRET_KEY;
 if (!secretKey) {
@@ -20,17 +21,21 @@ interface StripeCheckoutItem {
 // Helper to fetch PKR to USD exchange rate
 async function getPkrToUsdRate() {
   try {
-    // Example using exchangerate-api.com (replace with your preferred API)
     const res = await fetch("https://open.er-api.com/v6/latest/PKR");
-    const data = await res.json();
-    if (data && data.rates && data.rates.USD) {
-      return data.rates.USD;
+    if (!res.ok) {
+      throw new Error(`Exchange provider failed with status ${res.status}`);
     }
+
+    const data = await res.json();
+    const usdRate = Number(data?.rates?.USD);
+    if (Number.isFinite(usdRate) && usdRate > 0) {
+      return usdRate;
+    }
+
     throw new Error("USD rate not found");
   } catch (e) {
     console.error("Failed to fetch PKR to USD rate", e);
-    // Fallback to a hardcoded rate if needed
-    return 0.0036; // Example fallback rate
+    return FALLBACK_RATES.USD;
   }
 }
 

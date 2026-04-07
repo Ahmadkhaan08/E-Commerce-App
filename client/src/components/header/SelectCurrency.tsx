@@ -1,34 +1,59 @@
-import React from 'react'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
+"use client";
+
+import React, { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
+import { useCurrencyStore } from "@/lib/currencyStore";
+import { Loader2 } from "lucide-react";
 
 const SelectCurrency = () => {
-//     const currencies = [
-//   { code: "USD", name: "US Dollar", symbol: "$", rate: 1.0 },
-//   { code: "EUR", name: "Euro", symbol: "€", rate: 0.92 },
-//   { code: "GBP", name: "British Pound", symbol: "£", rate: 0.78 },
-//   { code: "PKR", name: "Pakistani Rupee", symbol: "₨", rate: 278.5 },
-//   { code: "INR", name: "Indian Rupee", symbol: "₹", rate: 83.1 },
-//   { code: "JPY", name: "Japanese Yen", symbol: "¥", rate: 150.3 },
-//   { code: "CNY", name: "Chinese Yuan", symbol: "¥", rate: 7.2 },
-//   { code: "AUD", name: "Australian Dollar", symbol: "A$", rate: 1.52 },
-//   { code: "CAD", name: "Canadian Dollar", symbol: "C$", rate: 1.36 },
-//   { code: "SAR", name: "Saudi Riyal", symbol: "﷼", rate: 3.75 },
-//   { code: "AED", name: "UAE Dirham", symbol: "د.إ", rate: 3.67 },
-//   { code: "TRY", name: "Turkish Lira", symbol: "₺", rate: 30.5 }
-// ];
+  const {
+    selectedCurrency,
+    isLoading,
+    error,
+    setCurrency,
+    fetchRates,
+  } = useCurrencyStore();
+
+  useEffect(() => {
+    fetchRates();
+  }, [fetchRates]);
+
   return (
-    <Select>
+    <div className="flex items-center gap-2">
+      <Select
+        value={selectedCurrency}
+        onValueChange={(value) => {
+          setCurrency(value);
+          fetchRates();
+        }}
+      >
         <SelectTrigger className="border-none bg-transparent focus:ring-0 focus:outline-none shadow-none flex items-center justify-between px-2 py-1 data-[size=default]:h-6 dark:bg-transparent dark:hover:bg-transparent">
-            <SelectValue placeholder="USD"></SelectValue>
+          <SelectValue placeholder="Currency" />
         </SelectTrigger>
         <SelectContent>
-            <SelectGroup>
-                <SelectLabel>USD</SelectLabel>
-                <SelectItem value='USD'>USD</SelectItem>
-            </SelectGroup>
+          <SelectGroup>
+            <SelectLabel>Currency</SelectLabel>
+            {SUPPORTED_CURRENCIES.map((currency) => (
+              <SelectItem key={currency.code} value={currency.code}>
+                {currency.symbol} {currency.code} - {currency.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
         </SelectContent>
-    </Select>
-  )
-}
+      </Select>
+      {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-label="Loading exchange rates" />}
+      {error && <span className="text-[10px] text-red-200">Offline rates</span>}
+    </div>
+  );
+};
 
-export default SelectCurrency
+export default SelectCurrency;

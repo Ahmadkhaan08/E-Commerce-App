@@ -12,12 +12,21 @@ export const getStats = asyncHandler(async (req, res) => {
   const brandCounts = await brandModel.countDocuments();
   const orderCounts = await orderModel.countDocuments();
 
-  // Get total revenue from completed orders
+  // Get total revenue from orders that are paid/settled.
+  // We prefer paidAt because older records can have inconsistent status labels.
   const revenueData = await orderModel.aggregate([
-    { $match: { status: { $in: ["Paid", "Delivered", "Completed"] } } },
+    {
+      $match: {
+        total: { $gt: 0 },
+        $or: [
+          { paidAt: { $exists: true, $ne: null } },
+          { status: { $in: ["Paid", "Completed"] } },
+        ],
+      },
+    },
     { $group: { _id: null, totalRevenue: { $sum: "$total" } } },
   ]);
-  const totalRevenue = revenueData[0]?.totalRevenue || 0;
+  const totalRevenue = Number(revenueData[0]?.totalRevenue || 0);
 
   // Get user roles distribution
   const roles = await userModel.aggregate([

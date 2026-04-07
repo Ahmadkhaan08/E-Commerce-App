@@ -67,10 +67,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const formatCurrency = (amount: number) => {
+    const normalizedAmount = Number.isFinite(amount) ? amount : 0;
     return new Intl.NumberFormat("en-PK", {
       style: "currency",
       currency: "PKR",
-    }).format(amount);
+    }).format(normalizedAmount);
   };
   useEffect(() => {
     // console.log(formatCurrency(15000))
@@ -100,7 +101,7 @@ const Dashboard = () => {
     } else {
       toast.success(toastState.message);
     }
-
+// console.log("stats:",stats);
     // Clear transient navigation state so toast is not replayed on refresh/back.
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
@@ -177,7 +178,7 @@ const Dashboard = () => {
                   <StatsCard
                     title="Total Revenue"
                     value={formatCurrency(stats.counts.totalRevenue)}
-                    icon={<LucideIndianRupee className="h-4 w-4 text-black" />}
+                    icon={<LucideIndianRupee className="h-6 w-6 text-black" />}
                     href="/dashboard/accounts"
                     className="bg-white/95 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
                   />

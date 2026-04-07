@@ -228,6 +228,13 @@ const CheckoutPageClient = () => {
           images: item.image ? [item.image] : undefined,
         }),
       );
+       // Validate customer email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let customerEmail = authUser?.email || "";
+  if (!emailRegex.test(customerEmail)) {
+    toast.error("Invalid email address. Using default email for checkout.");
+    customerEmail = "no-reply@example.com"; // Fallback email
+  }
       // Create stripe checkout session
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -238,7 +245,7 @@ const CheckoutPageClient = () => {
           items: stripeItems,
           shippingAmount: calculateShipping(),
           taxAmount: calculateTax(),
-          customerEmail: authUser?.email || "ismail@gmail.com",
+          customerEmail: customerEmail || authUser?.email || "",
           successUrl: `${window.location.origin}/success/orderId=${finalOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/user/checkout?orderId=${finalOrder._id}`,
           metadata: {
@@ -266,6 +273,8 @@ const CheckoutPageClient = () => {
       setProcessing(false);
     }
   };
+
+ 
 
   if (isLoading || authLoading) {
     return <CheckoutSkeleton />;

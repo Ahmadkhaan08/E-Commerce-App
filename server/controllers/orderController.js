@@ -49,7 +49,7 @@ export const createOrderFromCart = asyncHandler(async (req, res) => {
     userId: req.user._id,
     items: validateItems,
     total: total,
-    status: "Pending",
+    status: "pending",
     shippingAddress,
   });
 
@@ -63,7 +63,7 @@ export const createOrderFromCart = asyncHandler(async (req, res) => {
 // update orders
 export const updateOrder = asyncHandler(async (req, res) => {
   const { status, paymentIntentId, stripeSessionId } = req.body;
-  const validateStatuses = ["Pending", "Paid", "Completed", "Cancelled"];
+  const validateStatuses = ["pending", "paid", "completed", "cancelled"];
 
   if (!status || !validateStatuses.includes(status)) {
     res.status(400);
@@ -86,54 +86,58 @@ export const updateOrder = asyncHandler(async (req, res) => {
     shippingAddress: order.shippingAddress,
   });
 
-  
   // Check authorization based on order status and user role
   // - Users can only update their own orders when status is "pending"
   // - Admins can update any order at any time
   // - Webhook calls (no req.user) are always allowed
-  if(req.user){
-    const isOwner=order.userId.toString()===req.user._id.toString()
-    const isAdmin=req.user.role==="admin"
-    const isPending=order.status==="Pending"
+  if (req.user) {
+    const isOwner = order.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+    const isPending = order.status === "pending";
 
     // If user is not admin and (not owner OR order is not pending), deny access
-    if(!isAdmin && (!isPending || !isOwner)){
-       res.status(403);
+    if (!isAdmin && (!isPending || !isOwner)) {
+      res.status(403);
       throw new Error(
         isPending
           ? "Not authorized to update this order"
-          : "Order status can only be updated by admin after payment"
+          : "Order status can only be updated by admin after payment",
       );
     }
   }
 
   // Prepare update object
-  const updateData={
-    status,updatedAt:new Date()
-  }
+  const updateData = {
+    status,
+    updatedAt: new Date(),
+  };
 
   // If marking as paid, store payment information and timestamp
-  if(status==="Paid"){
-    if(paymentIntentId){
-      updateData.paymentIntentId=paymentIntentId
+  if (status === "paid") {
+    if (paymentIntentId) {
+      updateData.paymentIntentId = paymentIntentId;
     }
-    if(stripeSessionId){
-      updateData.stripeSessionId=stripeSessionId
+    if (stripeSessionId) {
+      updateData.stripeSessionId = stripeSessionId;
     }
-    updateData.paidAt=new Date()
+    updateData.paidAt = new Date();
   }
 
   // Use findByIdAndUpdate to avoid full document validation
-  const updatedOrder=await orderModel.findByIdAndUpdate(req.params.id,updateData,{
-    new:true,
-    runValidators:false
-  })
+  const updatedOrder = await orderModel.findByIdAndUpdate(
+    req.params.id,
+    updateData,
+    {
+      new: true,
+      runValidators: false,
+    },
+  );
 
   res.json({
-    success:true,
-    order:updatedOrder,
-    message:`Order status updated to ${status}`
-  })
+    success: true,
+    order: updatedOrder,
+    message: `Order status updated to ${status}`,
+  });
 });
 
 // get all orders for user
@@ -185,7 +189,7 @@ export const deleteOrders = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to delete this order");
   }
   // Only allow deletion if order is still pending
-  if (order.status !== "Pending") {
+  if (order.status !== "pending") {
     res.status(400);
     throw new Error("Cannot delete order that has been processed");
   }
@@ -212,11 +216,11 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
 
   if (paymentStatus && paymentStatus === "all") {
     if (paymentStatus === "Paid") {
-      filter.status = { $in: ["Paid", "Completed"] };
-    } else if (paymentStatus === "Pending") {
-      filter.status = "Pending";
-    } else if (paymentStatus === "Failed") {
-      filter.status = "Cancelled";
+      filter.status = { $in: ["paid", "completed"] };
+    } else if (paymentStatus === "pending") {
+      filter.status = "pending";
+    } else if (paymentStatus === "failed") {
+      filter.status = "cancelled";
     }
   }
 
@@ -255,11 +259,11 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
     totalAmount: order.total,
     status: order.status,
     paymentStatus:
-      order.status === "Paid" || order.status === "Completed"
-        ? "Paid"
-        : order.status === "Cancelled"
-          ? "Failed"
-          : "Pending",
+      order.status === "paid" || order.status === "completed"
+        ? "paid"
+        : order.status === "cancelled"
+          ? "failed"
+          : "pending",
     shippingAddress: order.shippingAddress || {
       street: "N/A",
       city: "N/A",

@@ -1,20 +1,36 @@
+"use client";
+
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useEffect, useMemo } from "react";
+import { useCurrencyStore } from "@/lib/currencyStore";
+import { convertFromBase, formatCurrencyAmount } from "@/lib/currency";
 
 interface Props {
   amount: number | null;
   className?: string;
 }
 const PriceFormatter = ({ amount, className }: Props) => {
-  if (!amount) return null;
+  const { selectedCurrency, rates, isLoading, fetchRates } = useCurrencyStore();
 
-  const formattedPrice = new Number(amount).toLocaleString("en-PK", {
-    currency: "PKR",
-    style: "currency",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return <span className={cn("text-sm font-semibold text-babyshopRed",className)}>{formattedPrice}</span>;
+  useEffect(() => {
+    fetchRates();
+  }, [fetchRates]);
+
+  if (amount === null || amount === undefined) return null;
+
+  const formattedPrice = useMemo(() => {
+    const converted = convertFromBase(amount, selectedCurrency, rates);
+    return formatCurrencyAmount(converted, selectedCurrency, "en");
+  }, [amount, selectedCurrency, rates]);
+
+  return (
+    <span
+      className={cn("text-sm font-semibold text-babyshopRed", className)}
+      title={isLoading ? "Refreshing exchange rates" : undefined}
+    >
+      {formattedPrice}
+    </span>
+  );
 };
 
 export default PriceFormatter;
