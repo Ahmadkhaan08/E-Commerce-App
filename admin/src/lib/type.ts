@@ -60,3 +60,56 @@ export interface StatsData{
   brands:{name:string;value:number}[];
 
 }
+
+export type RawOrderStatus =
+  | "pending"
+  | "processing"
+  | "paid"
+  | "completed"
+  | "cancelled";
+
+export type OrderPaymentStatus = "paid" | "pending" | "failed";
+
+export interface OrderCustomer {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface OrderProduct {
+  _id: string;
+  name: string;
+  image?: string;
+  price: number;
+}
+
+export interface OrderItem {
+  product: OrderProduct;
+  quantity: number;
+  price: number;
+}
+
+export interface OrderShippingAddress {
+  street: string;
+  city: string;
+  state?: string;
+  zipCode?: string;
+  postalCode?: string;
+  country: string;
+}
+
+export interface AdminOrder {
+  _id: string;
+  orderId: string;
+  userId: OrderCustomer;
+  items: OrderItem[];
+  totalAmount: number;
+  status: RawOrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  shippingAddress: OrderShippingAddress;
+  paymentIntentId?: string;
+  stripeSessionId?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

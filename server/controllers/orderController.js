@@ -1,5 +1,7 @@
 import asyncHandler from "express-async-handler";
+import mongoose from "mongoose";
 import orderModel from "../models/orderModel.js";
+import userModel from "../models/userModel.js";
 
 // Create order from Cart
 export const createOrderFromCart = asyncHandler(async (req, res) => {
@@ -203,25 +205,110 @@ export const deleteOrders = asyncHandler(async (req, res) => {
 
 // get all orders for admin
 export const getAdminOrders = asyncHandler(async (req, res) => {
-  const page = req.query.page || 1;
-  const perPage = req.query.perPage || 20;
-  const sortOrder = req.query.sortOrder === "desc" ? -1 : 1;
-  const status = req.query.status;
-  const paymentStatus = req.query.paymentStatus;
-  // Build filter object
-  const filter = {};
-  if (status && status === "all") {
-    filter.status = status;
+  if (!req.user || req.user.role !== "admin") {
+    res.status(403);
+    throw new Error("Admin access required");
   }
 
-  if (paymentStatus && paymentStatus === "all") {
-    if (paymentStatus === "Paid") {
-      filter.status = { $in: ["paid", "completed"] };
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const perPage = Math.min(100, Math.max(5, Number(req.query.perPage) || 20));
+  const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+  const sortBy = ["createdAt", "total", "status"].includes(req.query.sortBy)
+    ? req.query.sortBy
+    : "createdAt";
+  const status = (req.query.status || "").toLowerCase();
+  const paymentStatus = (req.query.paymentStatus || "").toLowerCase();
+  const search = (req.query.search || "").trim();
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
+
+  const filter = {};
+
+  let allowedStatuses = null;
+  if (status && status !== "all") {
+    allowedStatuses = [status];
+  }
+
+  if (paymentStatus && paymentStatus !== "all") {
+    let paymentStatuses = null;
+    if (paymentStatus === "paid") {
+      paymentStatuses = ["paid", "completed"];
     } else if (paymentStatus === "pending") {
-      filter.status = "pending";
+      paymentStatuses = ["pending", "processing"];
     } else if (paymentStatus === "failed") {
-      filter.status = "cancelled";
+      paymentStatuses = ["cancelled"];
     }
+
+    if (paymentStatuses) {
+      if (allowedStatuses) {
+        allowedStatuses = allowedStatuses.filter((entry) =>
+          paymentStatuses.includes(entry),
+        );
+      } else {
+        allowedStatuses = paymentStatuses;
+      }
+    }
+  }
+
+  if (allowedStatuses) {
+    if (!allowedStatuses.length) {
+      return res.json({
+        orders: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: page,
+        perPage,
+      });
+    }
+    filter.status =
+      allowedStatuses.length === 1
+        ? allowedStatuses[0]
+        : { $in: allowedStatuses };
+  }
+
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) {
+      filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
+    }
+    if (endDate) {
+      filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
+    }
+  }
+
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchRegex = new RegExp(escaped, "i");
+
+    const matchedUsers = await userModel
+      .find({
+        $or: [{ name: searchRegex }, { email: searchRegex }],
+      })
+      .select("_id")
+      .lean();
+
+    const userIds = matchedUsers.map((user) => user._id);
+    const orFilters = [];
+
+    if (userIds.length) {
+      orFilters.push({ userId: { $in: userIds } });
+    }
+
+    if (mongoose.Types.ObjectId.isValid(search)) {
+      orFilters.push({ _id: search });
+    }
+
+    if (!orFilters.length) {
+      return res.json({
+        orders: [],
+        total: 0,
+        totalPages: 0,
+        currentPage: page,
+        perPage,
+      });
+    }
+
+    filter.$or = orFilters;
   }
 
   const skip = (page - 1) * perPage;
@@ -230,7 +317,7 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
     .find(filter)
     .populate("userId", "name email")
     .populate("items.productId", "name image price")
-    .sort({ createdAt: sortOrder })
+    .sort({ [sortBy]: sortOrder })
     .skip(skip)
     .limit(perPage);
 
@@ -242,16 +329,16 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
     _id: order._id,
     orderId: `ORD-${order._id.toString().slice(6).toUpperCase()}`,
     userId: {
-      _id: order.userId._id,
-      name: order.userId.name,
-      email: order.userId.email,
+      _id: order.userId?._id || null,
+      name: order.userId?.name || "Unknown Customer",
+      email: order.userId?.email || "unknown@example.com",
     },
     items: order.items.map((item) => ({
       product: {
-        _id: item.productId._id,
-        name: item.productId.name,
-        image: item.productId.image,
-        price: item.productId.price,
+        _id: item.productId?._id || null,
+        name: item.productId?.name || item.name,
+        image: item.productId?.image || item.image,
+        price: item.productId?.price || item.price,
       },
       quantity: item.quantity,
       price: item.price,
@@ -280,5 +367,6 @@ export const getAdminOrders = asyncHandler(async (req, res) => {
     total,
     totalPages,
     currentPage: page,
+    perPage,
   });
 });
