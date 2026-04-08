@@ -59,3 +59,36 @@ export const bannerSchema=z.object({
   image:z.string().min(1,"Image is required!"),
   bannerType:z.string().min(1,"Type is required!")
 })
+
+export const profileSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters!" }),
+  avatar: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || /^\+?[0-9\s()-]{7,20}$/.test(value),
+      "Please enter a valid phone number!",
+    ),
+  bio: z
+    .string()
+    .max(220, { message: "Bio must be 220 characters or fewer!" })
+    .optional(),
+});
+
+export const passwordSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, { message: "Current password is required!" }),
+    newPassword: z
+      .string()
+      .min(6, { message: "New password must be at least 6 characters!" }),
+    confirmPassword: z
+      .string()
+      .min(1, { message: "Please confirm your new password!" }),
+  })
+  .refine((values) => values.newPassword === values.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Password confirmation does not match!",
+  });

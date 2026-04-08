@@ -46,7 +46,7 @@ const router=createBrowserRouter([
   path:"/dashboard/invoices",
   element:<Invoices/>
 },{
-  path:"/dashboard/accounts",
+  path:"/dashboard/account",
   element:<Account/>
 },    
   ]}])

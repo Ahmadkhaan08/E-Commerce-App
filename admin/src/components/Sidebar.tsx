@@ -34,7 +34,7 @@ type NavItemsProps = {
 
 const NavigationsItems = [
   { to: "/dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard", end: true },
-  { to: "/dashboard/accounts", icon: <User size={20} />, label: "Accounts" },
+  { to: "/dashboard/account", icon: <User size={20} />, label: "Account" },
   { to: "/dashboard/users", icon: <Users />, label: "Users" },
   { to: "/dashboard/orders", icon: <Package size={20} />, label: "Orders" },
   { to: "/dashboard/invoices", icon: <FileText size={20} />, label: "Invoices" },
