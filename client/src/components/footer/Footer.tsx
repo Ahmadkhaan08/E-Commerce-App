@@ -36,7 +36,6 @@ const Footer = () => {
       <HrLine />
       <Container className="hidden md:grid grid-cols-2  lg:grid-cols-4 p-10 gap-5">
         <div>
-
         <Title className="text-lg mb-4">Information</Title>
         <div className="flex flex-col gap-2">
           {informationTab?.map((item) => (

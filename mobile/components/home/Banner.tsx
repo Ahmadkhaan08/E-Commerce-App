@@ -98,7 +98,7 @@ const Banner = () => {
             <View className="relative  ">
               <Image
                 source={{ uri: banner.image }}
-                className="h-60 w-full rounded-md bg-gray-100 mt-3"
+                className="h-60 w-100 rounded-md bg-gray-100 mt-3"
                 resizeMode="cover"
               />
               <View className="absolute top-0 left-0 h-full w-full  items-center justify-center gap-3">
