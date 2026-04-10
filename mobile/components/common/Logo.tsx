@@ -5,9 +5,10 @@ import { Link } from "expo-router";
 
 const Logo = () => {
   return (
-    <Link href={"/"} asChild>
+    <Link href={"/"} asChild className="flex-row items-center justify-center gap-1">
       <Pressable>
-        <Image source={smallLogo} className="w-10 h-10 rounded-lg " />
+        <Image source={smallLogo} className="w-10 h-10  " />
+        <Text>BabyMart</Text>
       </Pressable>
     </Link>
   );

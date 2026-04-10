@@ -8,18 +8,18 @@ const Header = () => {
   return (
     <ScrollView stickyHeaderIndices={[0]} className="border-b top-0 z-50 bg-babyshopWhite">
       <TopHeader />
-      <View className="flex-row items-center justify-between  gap-10 p-2">
+      <View className="flex-row items-center justify-between gap-5 p-2">
         <View className="flex-row  items-center  gap-2">
           <Sidebar />
           <Logo />
         </View>
 
-        <View className="flex-row  items-center   gap-3">
+        <View className="flex-row  items-center   gap-2">
           <Text>Order</Text>
           <Text>Wishlist</Text>
           <Text>Cart</Text>
         </View>
-        <View className="mr-2">
+        <View className="mr-3">
           <SearchInput />
         </View>
       </View>

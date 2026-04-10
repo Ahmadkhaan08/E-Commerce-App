@@ -4,7 +4,7 @@ import { footerTopData } from '@/constants/data'
 
 const TopFooter = () => {
   return (
-    <ScrollView className='bg-gray-200 rounded-md mr-3 mb-2 gap-5 ml-3 py-5'>
+    <ScrollView className='bg-gray-200 rounded-md  mb-2 gap-5 m-2  py-5'>
         {footerTopData.map((item)=>{
             const Icon = item.image;
             return (
@@ -12,7 +12,7 @@ const TopFooter = () => {
             <Icon width={32} height={32} />
             <View>
                 <Text className='text-lg font-medium capitalize mb-1.5'>{item.title}</Text>
-                <Text className='font-medium text-babyshopBlack leading-5'>{item.subTitle}</Text>
+                <Text className='font-medium text-sm text-babyshopBlack leading-5 '>{item.subTitle}</Text>
             </View>
             </View>
               );
