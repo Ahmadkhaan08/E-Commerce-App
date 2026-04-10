@@ -28,7 +28,7 @@ export const createBanner = asyncHandler(async (req, res) => {
   });
   const createdBanner=await banner.save()
   if(createdBanner){
-    res.status(201).json(banner)
+    res.status(201).json(createdBanner)
   }else{
     res.status(400);
     throw new Error("Invalid banner data");
@@ -64,23 +64,22 @@ export const updateBanner=asyncHandler(async(req,res)=>{
     const banner=await bannerModel.findById(req.params.id)
 
     if(banner){
-        banner.name=name || banner.name
-        banner.title=title || banner.title
-        banner.startFrom=startFrom || banner.startFrom
-        banner.bannerType=bannerType || banner.bannerType
+        banner.name = name ?? banner.name
+        banner.title = title ?? banner.title
+        banner.startFrom = startFrom ?? banner.startFrom
+        banner.bannerType = bannerType ?? banner.bannerType
 
-        
-        if(image!==undefined){
-            let imageUrl = "";
-  if (image) {
-    const result = await cloudinary.uploader.upload(image, {
-      folder: "admin-dashboard/banners",
-    });
-    imageUrl = result.secure_url;
-  }
-        }else{
-            image=undefined
+        if (image !== undefined) {
+          if (image) {
+            const result = await cloudinary.uploader.upload(image, {
+              folder: "admin-dashboard/banners",
+            });
+            banner.image = result.secure_url;
+          } else {
+            banner.image = undefined;
+          }
         }
+
         const updatedBanner=await banner.save()
         res.json(updatedBanner)
     }else{
