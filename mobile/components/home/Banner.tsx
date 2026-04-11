@@ -2,38 +2,21 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import Constants from "expo-constants";
 import { Banners } from "@/types/type";
 import { Link } from "expo-router";
+import { getBaseUrl } from "@/constants/api";
 
-const getApiBaseUrl = () => {
-  // const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  // if (envUrl) {
-  //   return envUrl.replace(/\/$/, "");
-  // }
-
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const host = hostUri.split(":")[0];
-    return `http://${host}:8000`;
-  }
-
-  return Platform.OS === "android"
-    ? "http://10.0.2.2:8000"
-    : "http://localhost:8000";
-};
 
 const Banner = () => {
   const [banners, setBanners] = useState<Banners[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiBaseUrl = useMemo(() => getApiBaseUrl(), []);
+  const apiBaseUrl = useMemo(() => getBaseUrl(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -91,21 +74,21 @@ const Banner = () => {
   }
 
   return (
-    <ScrollView className="px-2 py-3 ml-2">
+    <ScrollView className="ml-2">
       {banners.map((banner) => (
         <View key={banner._id} className="mr-3">
           {banner.image ? (
             <View className="relative  ">
               <Image
                 source={{ uri: banner.image }}
-                className="h-60 w-100 rounded-md bg-gray-100 mt-3"
+                className="h-80 w-100 rounded-md bg-gray-100 mt-3"
                 resizeMode="cover"
               />
-              <View className="absolute top-0 left-0 h-full w-full  items-center justify-center gap-3">
-                <Text className="font-bold text-sm text-black">
+              <View className="absolute top-0 left-0  h-full w-full  items-center justify-center gap-3">
+                <Text className="font-bold text-lg text-black">
                   {banner.name}
                 </Text>
-                <Text className="font-medium text-xl text-black max-w-96 text-center capitalize">
+                <Text className="font-medium text-4xl text-black max-w-96 text-center capitalize ">
                   {banner.title}
                 </Text>
                 <Link href={"/"} asChild>
