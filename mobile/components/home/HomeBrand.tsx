@@ -61,7 +61,7 @@ const HomeBrand = () => {
 
               <Image
                 source={{ uri: brand?.image }}
-                className="h-28 mt-2"
+                className="mt-2"
                 height={130}
                 width={130}
                 />
