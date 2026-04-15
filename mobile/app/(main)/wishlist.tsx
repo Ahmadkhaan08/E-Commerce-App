@@ -1,5 +1,6 @@
 import WishlistItem from "@/components/shop/WishlistItem";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
+import SkeletonBox from "@/skeleton/SkeletonBox";
 import {
   addProductToCart,
   apiRequest,
@@ -10,8 +11,6 @@ import { Product } from "@/types/type";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -29,6 +28,31 @@ type WishlistProductsResponse = {
   products: Product[];
 };
 
+function WishlistSkeleton() {
+  return (
+    <View>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <View
+          key={i}
+          className="mb-3 rounded-2xl border border-[#dde6ff] bg-white p-3"
+        >
+          <View className="flex-row">
+            <SkeletonBox width={64} height={64} borderRadius={12} />
+            <View className="ml-3 flex-1">
+              <SkeletonBox width="75%" height={14} borderRadius={6} />
+              <SkeletonBox width="35%" height={14} borderRadius={6} style={{ marginTop: 6 }} />
+              <View className="mt-3 flex-row items-center gap-2">
+                <SkeletonBox width={90} height={30} borderRadius={16} />
+                <SkeletonBox width={32} height={32} borderRadius={16} />
+              </View>
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function WishlistScreen() {
   const refreshCounts = useStore((s) => s.refreshCounts);
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,6 +61,8 @@ export default function WishlistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [pendingCartId, setPendingCartId] = useState<string | null>(null);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -47,6 +73,13 @@ export default function WishlistScreen() {
 
     setAuthReady(true);
   }, []);
+
+  // Auto-dismiss feedback message
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [message]);
 
   const loadWishlist = useCallback(async () => {
     try {
@@ -122,6 +155,7 @@ export default function WishlistScreen() {
         return;
       }
 
+      setPendingRemoveId(productId);
       await apiRequest<{ success: boolean }>(
         "/api/wishlist/remove",
         {
@@ -139,6 +173,8 @@ export default function WishlistScreen() {
           ? requestError.message
           : "Failed to remove item",
       );
+    } finally {
+      setPendingRemoveId(null);
     }
   };
 
@@ -150,23 +186,26 @@ export default function WishlistScreen() {
         return;
       }
 
+      setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
       await refreshCounts();
 
-      setMessage("Added to cart");
+      setMessage("Added to cart 🛒");
     } catch (requestError) {
       setMessage(
         requestError instanceof Error
           ? requestError.message
           : "Failed to add to cart",
       );
+    } finally {
+      setPendingCartId(null);
     }
   };
 
   if (!authReady) {
     return (
       <View className="flex-1 items-center justify-center bg-[#edf3ff]">
-        <ActivityIndicator size="large" color="#7f8ff5" />
+        <SkeletonBox width={48} height={48} borderRadius={24} />
       </View>
     );
   }
@@ -187,11 +226,7 @@ export default function WishlistScreen() {
           }
           contentContainerStyle={{ paddingTop: 14, paddingBottom: 20 }}
         >
-          {loading ? (
-            <View className="mt-16 items-center">
-              <ActivityIndicator size="large" color="#7f8ff5" />
-            </View>
-          ) : null}
+          {loading ? <WishlistSkeleton /> : null}
 
           {error ? (
             <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
@@ -200,8 +235,8 @@ export default function WishlistScreen() {
           ) : null}
 
           {message ? (
-            <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
-              <Text className="text-xs text-[#6e7a97]">{message}</Text>
+            <View className="mb-4 rounded-2xl border border-[#c8dcff] bg-[#eaf2ff] px-4 py-2.5">
+              <Text className="text-center text-xs font-semibold text-[#3b5998]">{message}</Text>
             </View>
           ) : null}
 
@@ -220,6 +255,8 @@ export default function WishlistScreen() {
               name={product.name}
               image={product.image}
               price={product.price}
+              addingToCart={pendingCartId === product._id}
+              removing={pendingRemoveId === product._id}
               onRemove={removeFromWishlist}
               onAddToCart={addToCart}
             />

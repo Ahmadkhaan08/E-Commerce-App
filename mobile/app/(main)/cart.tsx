@@ -1,11 +1,11 @@
 import CartItem from "@/components/shop/CartItem";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
+import SkeletonBox from "@/skeleton/SkeletonBox";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
 import { useStore } from "@/store/useStore";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 
@@ -27,6 +27,29 @@ type CartResponse = {
 
 const toPrice = (value: number) => `Rs. ${value.toLocaleString("en-PK")}`;
 
+function CartSkeleton() {
+  return (
+    <View>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <View
+          key={i}
+          className="mb-3 flex-row rounded-2xl border border-[#dde6ff] bg-white p-3"
+        >
+          <SkeletonBox width={64} height={64} borderRadius={12} />
+          <View className="ml-3 flex-1">
+            <SkeletonBox width="80%" height={14} borderRadius={6} />
+            <SkeletonBox width="40%" height={14} borderRadius={6} style={{ marginTop: 6 }} />
+            <View className="mt-3 flex-row items-center justify-between">
+              <SkeletonBox width={90} height={28} borderRadius={8} />
+              <SkeletonBox width={32} height={32} borderRadius={16} />
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function CartScreen() {
   const insets = useSafeAreaInsets();
   const refreshCounts = useStore((s) => s.refreshCounts);
@@ -35,6 +58,7 @@ export default function CartScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [pendingItemId, setPendingItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -91,6 +115,7 @@ export default function CartScreen() {
         return;
       }
 
+      setPendingItemId(productId);
       await apiRequest<CartResponse>(
         "/api/carts/update",
         {
@@ -103,6 +128,8 @@ export default function CartScreen() {
       await loadCart();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to update cart");
+    } finally {
+      setPendingItemId(null);
     }
   };
 
@@ -114,10 +141,13 @@ export default function CartScreen() {
         return;
       }
 
+      setPendingItemId(productId);
       await apiRequest<CartResponse>(`/api/carts/${productId}`, { method: "DELETE" }, token);
       await loadCart();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to remove item");
+    } finally {
+      setPendingItemId(null);
     }
   };
 
@@ -140,7 +170,7 @@ export default function CartScreen() {
   if (!authReady) {
     return (
       <View className="flex-1 items-center justify-center bg-[#edf3ff]">
-        <ActivityIndicator size="large" color="#7f8ff5" />
+        <SkeletonBox width={48} height={48} borderRadius={24} />
       </View>
     );
   }
@@ -156,11 +186,7 @@ export default function CartScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7f8ff5" />}
           contentContainerStyle={{ paddingTop: 14, paddingBottom: 130 }}
         >
-          {loading ? (
-            <View className="mt-16 items-center">
-              <ActivityIndicator size="large" color="#7f8ff5" />
-            </View>
-          ) : null}
+          {loading ? <CartSkeleton /> : null}
 
           {error ? (
             <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
@@ -179,6 +205,7 @@ export default function CartScreen() {
               key={line.productId._id}
               product={line.productId}
               quantity={line.quantity}
+              loading={pendingItemId === line.productId._id}
               onIncrease={() => updateQuantity(line.productId._id, line.quantity + 1)}
               onDecrease={() => updateQuantity(line.productId._id, Math.max(0, line.quantity - 1))}
               onRemove={() => removeItem(line.productId._id)}

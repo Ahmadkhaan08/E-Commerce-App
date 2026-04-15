@@ -127,6 +127,9 @@ export default function MainLayout() {
         <Tabs.Screen name="addresses" options={{ href: null }} />
         <Tabs.Screen name="my-orders" options={{ href: null }} />
         <Tabs.Screen name="edit-profile" options={{ href: null }} />
+        <Tabs.Screen name="brands" options={{ href: null }} />
+        <Tabs.Screen name="terms" options={{ href: null }} />
+        <Tabs.Screen name="privacy" options={{ href: null }} />
       </Tabs>
 
       <FloatingCart />

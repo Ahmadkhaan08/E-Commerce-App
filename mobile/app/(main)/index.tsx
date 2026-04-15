@@ -7,6 +7,12 @@ import ProductSlider from "@/components/home-screen/ProductSlider";
 import PromoBanner from "@/components/home-screen/PromoBanner";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { getBaseUrl } from "@/constants/api";
+import {
+  addProductToCart,
+  apiRequest,
+  getAuthToken,
+  toggleWishlistProduct,
+} from "@/constants/mobileApi";
 import { useStore } from "@/store/useStore";
 import { Banners, Brand, Category, Product } from "@/types/type";
 import { router } from "expo-router";
@@ -26,6 +32,10 @@ type ProductResponse = {
 
 type CategoryResponse = {
   category: Category[];
+};
+
+type WishlistResponse = {
+  wishlist: string[];
 };
 
 type Promotion = {
@@ -85,6 +95,26 @@ export default function Index() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Wishlist + Cart interaction state
+  const [wishlistSet, setWishlistSet] = useState<Set<string>>(new Set());
+  const [pendingCartId, setPendingCartId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const loadWishlist = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setWishlistSet(new Set());
+      return;
+    }
+
+    try {
+      const data = await apiRequest<WishlistResponse>("/api/wishlist", undefined, token);
+      setWishlistSet(new Set(data.wishlist || []));
+    } catch {
+      setWishlistSet(new Set());
+    }
+  }, []);
+
   const loadHomeData = useCallback(async () => {
     const baseUrl = getBaseUrl();
 
@@ -139,8 +169,8 @@ export default function Index() {
       setPromotion(EMPTY_PROMOTION);
     }
 
-    // Refresh global counts
-    await refreshCounts();
+    // Refresh global counts + wishlist
+    await Promise.allSettled([refreshCounts(), loadWishlist()]);
 
     const failed = [
       bannersResult,
@@ -155,7 +185,7 @@ export default function Index() {
         ? "Some home sections could not load from backend and are using graceful fallbacks."
         : null,
     );
-  }, [refreshCounts]);
+  }, [refreshCounts, loadWishlist]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -172,6 +202,80 @@ export default function Index() {
 
     run();
   }, [loadHomeData]);
+
+  // Auto-dismiss feedback message
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 2500);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  const toggleWishlist = async (productId: string) => {
+    const token = getAuthToken();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const wasWishlisted = wishlistSet.has(productId);
+
+    // Optimistic update
+    setWishlistSet((prev) => {
+      const next = new Set(prev);
+      if (wasWishlisted) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+
+    try {
+      const nextWishlisted = await toggleWishlistProduct(productId, wasWishlisted, token);
+      setWishlistSet((prev) => {
+        const next = new Set(prev);
+        if (nextWishlisted) {
+          next.add(productId);
+        } else {
+          next.delete(productId);
+        }
+        return next;
+      });
+      setMessage(nextWishlisted ? "Added to wishlist ❤️" : "Removed from wishlist");
+      await refreshCounts();
+    } catch {
+      // Revert optimistic update
+      setWishlistSet((prev) => {
+        const next = new Set(prev);
+        if (wasWishlisted) {
+          next.add(productId);
+        } else {
+          next.delete(productId);
+        }
+        return next;
+      });
+      setMessage("Could not update wishlist");
+    }
+  };
+
+  const addToCart = async (productId: string) => {
+    const token = getAuthToken();
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      setPendingCartId(productId);
+      await addProductToCart(productId, 1, token);
+      setMessage("Added to cart 🛒");
+      await refreshCounts();
+    } catch {
+      setMessage("Could not add to cart");
+    } finally {
+      setPendingCartId(null);
+    }
+  };
 
   const isEmpty = !loading && banners.length === 0 && categories.length === 0 && deals.length === 0 && trending.length === 0;
 
@@ -204,6 +308,13 @@ export default function Index() {
                   </View>
                 ) : null}
 
+                {/* Toast-style feedback */}
+                {message ? (
+                  <View className="mt-3 rounded-2xl border border-[#c8dcff] bg-[#eaf2ff] px-4 py-2.5">
+                    <Text className="text-center text-xs font-semibold text-[#3b5998]">{message}</Text>
+                  </View>
+                ) : null}
+
                 {isEmpty ? (
                   <View className="mt-16 items-center rounded-2xl border border-[#dce7ff] bg-[#f8fbff] p-6">
                     <Text className="text-base font-bold text-[#1f2a44]">No home content available yet</Text>
@@ -218,11 +329,40 @@ export default function Index() {
 
                     <CategoryList categories={categories} onSeeAll={() => router.push({ pathname: "/(main)/categories" as any })} />
 
-                    <ProductSlider title="Baby Deals" products={deals} onSeeAll={() => router.push({ pathname: "/(main)/products" as any })} />
+                    <ProductSlider
+                      title="Baby Deals"
+                      products={deals}
+                      loading={loading}
+                      wishlistSet={wishlistSet}
+                      pendingCartId={pendingCartId}
+                      onToggleWishlist={toggleWishlist}
+                      onAddToCart={addToCart}
+                      onProductPress={(id) => router.push({ pathname: "/(main)/product/[id]", params: { id } })}
+                      onSeeAll={() => router.push({ pathname: "/(main)/products" as any })}
+                    />
 
-                    <ProductSlider title="Trending" products={trending} onSeeAll={() => router.push({ pathname: "/(main)/products" as any })} />
+                    <ProductSlider
+                      title="Trending"
+                      products={trending}
+                      loading={loading}
+                      wishlistSet={wishlistSet}
+                      pendingCartId={pendingCartId}
+                      onToggleWishlist={toggleWishlist}
+                      onAddToCart={addToCart}
+                      onProductPress={(id) => router.push({ pathname: "/(main)/product/[id]", params: { id } })}
+                      onSeeAll={() => router.push({ pathname: "/(main)/products" as any })}
+                    />
 
-                    <BrandList brands={brands} onSeeAll={() => router.push({ pathname: "/(main)/search" as any })} />
+                    <BrandList
+                      brands={brands}
+                      onSeeAll={() => router.push({ pathname: "/(main)/brands" as any })}
+                      onBrandPress={(brand) =>
+                        router.push({
+                          pathname: "/(main)/products" as any,
+                          params: { brand: brand._id, title: brand.name },
+                        })
+                      }
+                    />
 
                     <PromoBanner
                       title={activePromo.title || "Travel Smart"}
@@ -233,7 +373,8 @@ export default function Index() {
                     <MobileFooter
                       onPressAbout={() => router.push("/(main)/about")}
                       onPressContact={() => router.push("/(main)/help-support")}
-                      onPressTerms={() => router.push("/(main)/about")}
+                      onPressTerms={() => router.push("/(main)/terms" as any)}
+                      onPressPrivacy={() => router.push("/(main)/privacy" as any)}
                     />
                   </>
                 )}

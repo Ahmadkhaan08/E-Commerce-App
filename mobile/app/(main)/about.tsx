@@ -4,7 +4,7 @@ import { ScrollView, Text, View } from "react-native";
 
 export default function AboutScreen() {
   return (
-    // <ScreenWrapper>
+    <ScreenWrapper>
     <>
       <InnerScreenHeader title="About Us" />
 
@@ -17,6 +17,6 @@ export default function AboutScreen() {
         </View>
       </ScrollView>
     </>
-    // </ScreenWrapper>
+    </ScreenWrapper>
   );
 }
