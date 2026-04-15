@@ -1,6 +1,7 @@
+import ScreenWrapper from "@/components/common/ScreenWrapper";
+import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
 import { Address } from "@/types/type";
-import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
@@ -31,14 +32,8 @@ export default function AddressesScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
-        <Pressable onPress={() => router.back()} className="h-9 w-9 items-center justify-center rounded-full bg-[#eef3ff]">
-          <Feather name="arrow-left" size={17} color="#2f3b59" />
-        </Pressable>
-        <Text className="text-lg font-bold text-[#1f2a44]">Addresses</Text>
-        <View className="h-9 w-9" />
-      </View>
+    <ScreenWrapper>
+      <InnerScreenHeader title="Addresses" />
 
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingTop: 14, paddingBottom: 24 }}>
         {loading ? (
@@ -62,6 +57,6 @@ export default function AddressesScreen() {
           ))
         )}
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }

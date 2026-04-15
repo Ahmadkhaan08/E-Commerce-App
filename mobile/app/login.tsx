@@ -37,7 +37,7 @@ export default function LoginScreen() {
       );
 
       await setAuthToken(data.token);
-      router.replace("/(main)/");
+      router.replace("/(main)/" as any);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Login failed");
     } finally {

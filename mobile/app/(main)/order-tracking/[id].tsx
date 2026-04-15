@@ -1,6 +1,7 @@
 import OrderTimeline from "@/components/shop/OrderTimeline";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
+import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -84,14 +85,8 @@ export default function OrderTrackingScreen() {
   const paymentLabel = order?.paymentIntentId ? "VISA / Card" : "Cash on Delivery";
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
-        <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
-          <Feather name="arrow-left" size={16} color="#2f3b59" />
-        </Pressable>
-        <Text className="text-base font-bold text-gray-800">Order Tracking Screen</Text>
-        <View className="h-8 w-8" />
-      </View>
+    <ScreenWrapper>
+      <InnerScreenHeader title="Order Tracking" />
 
       <ScrollView
         className="flex-1 px-4"
@@ -156,6 +151,6 @@ export default function OrderTrackingScreen() {
           <Text className="text-sm font-bold text-white">Leave Review</Text>
         </Pressable>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }

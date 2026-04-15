@@ -1,6 +1,9 @@
 import CheckoutSummary from "@/components/shop/CheckoutSummary";
 import PaymentOption from "@/components/shop/PaymentOption";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
+import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
+import { useStore } from "@/store/useStore";
 import { Address } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -47,6 +50,7 @@ type CreateOrderResponse = {
 
 export default function CheckoutScreen() {
   const insets = useSafeAreaInsets();
+  const refreshCounts = useStore((s) => s.refreshCounts);
   const [userId, setUserId] = useState("");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
@@ -208,6 +212,7 @@ export default function CheckoutScreen() {
         token,
       );
 
+      await refreshCounts();
       Alert.alert("Order placed", "Your order was created successfully.");
       router.push({ pathname: "/(main)/order-tracking/[id]", params: { id: response.order._id } });
     } catch (requestError) {
@@ -218,14 +223,8 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
-        <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
-          <Feather name="arrow-left" size={16} color="#2f3b59" />
-        </Pressable>
-        <Text className="text-base font-bold text-gray-800">Checkout</Text>
-        <View className="h-8 w-8" />
-      </View>
+    <ScreenWrapper>
+      <InnerScreenHeader title="Checkout" />
 
       <ScrollView
         className="flex-1 px-4"
@@ -326,6 +325,6 @@ export default function CheckoutScreen() {
           {placing ? <ActivityIndicator size="small" color="#ffffff" /> : <Text className="text-sm font-bold text-white">Place Order</Text>}
         </Pressable>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }

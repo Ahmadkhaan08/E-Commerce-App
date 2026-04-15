@@ -1,5 +1,7 @@
 import ProductCard from "@/components/shop/ProductCard";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -29,6 +31,7 @@ export default function SearchResultsScreen() {
     discount?: string;
   }>();
 
+  const refreshCounts = useStore((s) => s.refreshCounts);
   const [products, setProducts] = useState<Product[]>([]);
   const [wishlistSet, setWishlistSet] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -132,6 +135,7 @@ export default function SearchResultsScreen() {
         return next;
       });
       setMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
+      await refreshCounts();
     } catch {
       setMessage("Could not update wishlist");
     }
@@ -148,6 +152,7 @@ export default function SearchResultsScreen() {
       setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
       setMessage("Added to cart");
+      await refreshCounts();
     } catch {
       setMessage("Could not add to cart");
     } finally {
@@ -156,7 +161,7 @@ export default function SearchResultsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
+    <ScreenWrapper>
       <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
         <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
           <Feather name="arrow-left" size={16} color="#2f3b59" />
@@ -217,6 +222,6 @@ export default function SearchResultsScreen() {
           ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#7d8ff6" /> : null}
         />
       )}
-    </View>
+    </ScreenWrapper>
   );
 }

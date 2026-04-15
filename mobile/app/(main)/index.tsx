@@ -5,7 +5,9 @@ import MobileFooter from "@/components/footer/MobileFooter";
 import Header from "@/components/home-screen/Header";
 import ProductSlider from "@/components/home-screen/ProductSlider";
 import PromoBanner from "@/components/home-screen/PromoBanner";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { getBaseUrl } from "@/constants/api";
+import { useStore } from "@/store/useStore";
 import { Banners, Brand, Category, Product } from "@/types/type";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -71,13 +73,14 @@ function getTrending(products: Product[]) {
 }
 
 export default function Index() {
+  const refreshCounts = useStore((s) => s.refreshCounts);
+
   const [banners, setBanners] = useState<Banners[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [deals, setDeals] = useState<Product[]>([]);
   const [trending, setTrending] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [promotion, setPromotion] = useState<Promotion | null>(null);
-  const [cartCount, setCartCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +88,7 @@ export default function Index() {
   const loadHomeData = useCallback(async () => {
     const baseUrl = getBaseUrl();
 
-    const [bannersResult, categoriesResult, dealsResult, trendingResult, brandsResult, productsResult, promotionsResult, cartResult] =
+    const [bannersResult, categoriesResult, dealsResult, trendingResult, brandsResult, productsResult, promotionsResult] =
       await Promise.allSettled([
         fetchJson<Banners[]>(`${baseUrl}/api/banners`),
         fetchJson<CategoryResponse>(`${baseUrl}/api/categories?perPage=30`),
@@ -94,7 +97,6 @@ export default function Index() {
         fetchJson<Brand[]>(`${baseUrl}/api/brands`),
         fetchJson<ProductResponse>(`${baseUrl}/api/products?limit=30`),
         fetchJson<Promotion[]>(`${baseUrl}/api/promotions`),
-        fetchJson<{ cart?: { quantity?: number }[] }>(`${baseUrl}/api/carts`),
       ]);
 
     const allProducts =
@@ -137,12 +139,8 @@ export default function Index() {
       setPromotion(EMPTY_PROMOTION);
     }
 
-    if (cartResult.status === "fulfilled" && Array.isArray(cartResult.value.cart)) {
-      const count = cartResult.value.cart.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
-      setCartCount(count);
-    } else {
-      setCartCount(0);
-    }
+    // Refresh global counts
+    await refreshCounts();
 
     const failed = [
       bannersResult,
@@ -157,7 +155,7 @@ export default function Index() {
         ? "Some home sections could not load from backend and are using graceful fallbacks."
         : null,
     );
-  }, []);
+  }, [refreshCounts]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -180,7 +178,7 @@ export default function Index() {
   const activePromo = promotion ?? EMPTY_PROMOTION;
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
+    <ScreenWrapper>
       <View className="flex-1">
         <ScrollView
           stickyHeaderIndices={[0]}
@@ -188,7 +186,7 @@ export default function Index() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 24 }}
         >
-          <Header cartCount={cartCount} />
+          <Header />
 
           <View className="px-4">
             {loading ? (
@@ -218,11 +216,11 @@ export default function Index() {
                       onPressShopNow={() => router.push({ pathname: "/(main)/search" as any })}
                     />
 
-                    <CategoryList categories={categories} onSeeAll={() => router.push({ pathname: "/(main)/search" as any })} />
+                    <CategoryList categories={categories} onSeeAll={() => router.push({ pathname: "/(main)/categories" as any })} />
 
-                    <ProductSlider title="Baby Deals" products={deals} onSeeAll={() => router.push({ pathname: "/(main)/search" as any })} />
+                    <ProductSlider title="Baby Deals" products={deals} onSeeAll={() => router.push({ pathname: "/(main)/products" as any })} />
 
-                    <ProductSlider title="Trending" products={trending} onSeeAll={() => router.push({ pathname: "/(main)/search" as any })} />
+                    <ProductSlider title="Trending" products={trending} onSeeAll={() => router.push({ pathname: "/(main)/products" as any })} />
 
                     <BrandList brands={brands} onSeeAll={() => router.push({ pathname: "/(main)/search" as any })} />
 
@@ -244,6 +242,6 @@ export default function Index() {
           </View>
         </ScrollView>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }

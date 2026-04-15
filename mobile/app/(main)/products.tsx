@@ -1,5 +1,7 @@
 import ProductCard from "@/components/shop/ProductCard";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -17,6 +19,7 @@ type WishlistResponse = {
 
 export default function ProductListingScreen() {
   const params = useLocalSearchParams<{ category?: string; brand?: string; title?: string }>();
+  const refreshCounts = useStore((s) => s.refreshCounts);
   const [products, setProducts] = useState<Product[]>([]);
   const [wishlistSet, setWishlistSet] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -114,6 +117,7 @@ export default function ProductListingScreen() {
         return next;
       });
       setMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
+      await refreshCounts();
     } catch {
       setMessage("Could not update wishlist");
     }
@@ -130,6 +134,7 @@ export default function ProductListingScreen() {
       setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
       setMessage("Added to cart");
+      await refreshCounts();
     } catch {
       setMessage("Could not add to cart");
     } finally {
@@ -138,12 +143,12 @@ export default function ProductListingScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
+    <ScreenWrapper>
       <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
         <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
           <Feather name="arrow-left" size={16} color="#2f3b59" />
         </Pressable>
-        <Text className="text-base font-bold text-gray-800">{params.title || "Product Listing"}</Text>
+        <Text className="text-xl font-bold text-gray-800">{params.title || "Product Listing"}</Text>
         <Pressable onPress={() => router.push("/(main)/wishlist")} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
           <Ionicons name="heart-outline" size={15} color="#2f3b59" />
         </Pressable>
@@ -203,6 +208,6 @@ export default function ProductListingScreen() {
           ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#7d8ff6" /> : null}
         />
       )}
-    </View>
+    </ScreenWrapper>
   );
 }

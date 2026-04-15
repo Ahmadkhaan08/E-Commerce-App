@@ -1,4 +1,6 @@
 import CategoryCard from "@/components/shop/CategoryCard";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
+import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest } from "@/constants/mobileApi";
 import { Category } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
@@ -68,14 +70,8 @@ export default function CategoriesScreen() {
   }, [activeTab, categories, search]);
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#e1e9ff] bg-white px-4">
-        <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#f1f5ff]">
-          <Feather name="arrow-left" size={16} color="#1f2a44" />
-        </Pressable>
-        <Text className="text-base font-bold text-[#1f2a44]">Categories</Text>
-        <View className="h-8 w-8" />
-      </View>
+    <ScreenWrapper>
+      <InnerScreenHeader title="Categories" />
 
       <ScrollView
         className="flex-1 px-4"
@@ -89,7 +85,7 @@ export default function CategoriesScreen() {
             onChangeText={setSearch}
             placeholder="Search categories"
             placeholderTextColor="#8693b3"
-            className="ml-2 flex-1 text-[13px] text-[#1f2a44]"
+            className="ml-2 flex-1 text-[13px] text-[#1f2a44] py-0"
           />
         </View>
 
@@ -142,6 +138,6 @@ export default function CategoriesScreen() {
           </View>
         ) : null}
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }

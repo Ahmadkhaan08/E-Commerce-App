@@ -1,6 +1,8 @@
 import ProductImageCarousel from "@/components/shop/ProductImageCarousel";
 import QuantitySelector from "@/components/shop/QuantitySelector";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -16,6 +18,7 @@ type WishlistResponse = {
 export default function ProductDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const refreshCounts = useStore((s) => s.refreshCounts);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,6 +85,7 @@ export default function ProductDetailsScreen() {
       }
 
       await addProductToCart(product._id, quantity, token);
+      await refreshCounts();
       setActionMessage("Added to cart");
     } catch (requestError) {
       setActionMessage(requestError instanceof Error ? requestError.message : "Failed to add to cart");
@@ -102,6 +106,7 @@ export default function ProductDetailsScreen() {
 
       const nextWishlisted = await toggleWishlistProduct(product._id, isWishlisted, token);
       setIsWishlisted(nextWishlisted);
+      await refreshCounts();
       setActionMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
     } catch (requestError) {
       setActionMessage(requestError instanceof Error ? requestError.message : "Failed to update wishlist");
@@ -117,12 +122,12 @@ export default function ProductDetailsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
+    <ScreenWrapper>
       <View className="h-14 flex-row items-center justify-between border-b border-[#e1e9ff] bg-white px-4">
         <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#f1f5ff]">
           <Feather name="arrow-left" size={16} color="#1f2a44" />
         </Pressable>
-        <Text className="text-base font-bold text-[#1f2a44]">Product Details</Text>
+        <Text className="text-xl font-bold text-[#1f2a44]">Product Details</Text>
         <View className="flex-row gap-2">
           <Pressable className="h-8 w-8 items-center justify-center rounded-full bg-[#f1f5ff]">
             <Feather name="search" size={15} color="#7583a8" />
@@ -191,6 +196,6 @@ export default function ProductDetailsScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }

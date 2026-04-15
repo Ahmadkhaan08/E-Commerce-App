@@ -1,4 +1,5 @@
 import FilterOption from "@/components/shop/FilterOption";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { apiRequest } from "@/constants/mobileApi";
 import { Brand, Category } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
@@ -69,7 +70,7 @@ export default function FiltersScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
+    <ScreenWrapper>
       <View className="h-14 flex-row items-center justify-between border-b border-[#dbe6ff] bg-white px-4">
         <Pressable onPress={() => router.back()} className="h-8 w-8 items-center justify-center rounded-full bg-[#eef3ff]">
           <Feather name="arrow-left" size={16} color="#2f3b59" />
@@ -132,6 +133,6 @@ export default function FiltersScreen() {
           <Feather name="arrow-right" size={14} color="#fff" style={{ marginLeft: 6 }} />
         </Pressable>
       </View>
-    </View>
+    </ScreenWrapper>
   );
 }

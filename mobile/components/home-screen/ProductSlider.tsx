@@ -16,9 +16,9 @@ export default function ProductSlider({ title, products, onSeeAll }: ProductSlid
   return (
     <View className="mt-4">
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="text-lg font-bold text-[#1f2a44]">{title}</Text>
+        <Text className="text-xl font-bold text-[#1f2a44]">{title}</Text>
         <Pressable onPress={onSeeAll}>
-          <Text className="text-xs font-semibold text-[#7382a8]">See All</Text>
+          <Text className="text-sm font-semibold mr-2 text-[#7382a8]">See All</Text>
         </Pressable>
       </View>
 

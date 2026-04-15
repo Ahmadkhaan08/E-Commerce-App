@@ -1,9 +1,23 @@
 import WishlistItem from "@/components/shop/WishlistItem";
-import { addProductToCart, apiRequest, getAuthToken } from "@/constants/mobileApi";
+import ScreenWrapper from "@/components/common/ScreenWrapper";
+import {
+  addProductToCart,
+  apiRequest,
+  getAuthToken,
+} from "@/constants/mobileApi";
+import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 
 type WishlistResponse = {
   success: boolean;
@@ -16,6 +30,7 @@ type WishlistProductsResponse = {
 };
 
 export default function WishlistScreen() {
+  const refreshCounts = useStore((s) => s.refreshCounts);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,10 +57,18 @@ export default function WishlistScreen() {
       }
 
       setError(null);
-      const wishlistData = await apiRequest<WishlistResponse>("/api/wishlist", undefined, token);
+      const wishlistData = await apiRequest<WishlistResponse>(
+        "/api/wishlist",
+        undefined,
+        token,
+      );
 
-      if (!Array.isArray(wishlistData.wishlist) || wishlistData.wishlist.length === 0) {
+      if (
+        !Array.isArray(wishlistData.wishlist) ||
+        wishlistData.wishlist.length === 0
+      ) {
         setProducts([]);
+        await refreshCounts();
         return;
       }
 
@@ -58,11 +81,18 @@ export default function WishlistScreen() {
         token,
       );
 
-      setProducts(Array.isArray(productsData.products) ? productsData.products : []);
+      setProducts(
+        Array.isArray(productsData.products) ? productsData.products : [],
+      );
+      await refreshCounts();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Failed to load wishlist");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to load wishlist",
+      );
     }
-  }, []);
+  }, [refreshCounts]);
 
   useEffect(() => {
     if (!authReady) {
@@ -104,7 +134,11 @@ export default function WishlistScreen() {
       setMessage("Item removed from wishlist");
       await loadWishlist();
     } catch (requestError) {
-      setMessage(requestError instanceof Error ? requestError.message : "Failed to remove item");
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to remove item",
+      );
     }
   };
 
@@ -117,10 +151,15 @@ export default function WishlistScreen() {
       }
 
       await addProductToCart(productId, 1, token);
+      await refreshCounts();
 
       setMessage("Added to cart");
     } catch (requestError) {
-      setMessage(requestError instanceof Error ? requestError.message : "Failed to add to cart");
+      setMessage(
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to add to cart",
+      );
     }
   };
 
@@ -133,55 +172,60 @@ export default function WishlistScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#edf3ff]">
-      <View className="h-14 flex-row items-center justify-between border-b border-[#e1e9ff] bg-white px-4">
-        <Text className="text-lg font-bold text-[#1f2a44]">Wishlist</Text>
-        <Pressable>
-          <Text className="text-xs font-semibold text-[#7382a8]">See All</Text>
-        </Pressable>
+    <ScreenWrapper>
+      <View className="flex-1 bg-[#edf3ff]">
+        <InnerScreenHeader title="Wishlist" />
+
+        <ScrollView
+          className="flex-1 px-4"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#7f8ff5"
+            />
+          }
+          contentContainerStyle={{ paddingTop: 14, paddingBottom: 20 }}
+        >
+          {loading ? (
+            <View className="mt-16 items-center">
+              <ActivityIndicator size="large" color="#7f8ff5" />
+            </View>
+          ) : null}
+
+          {error ? (
+            <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
+              <Text className="text-xs text-[#6e7a97]">{error}</Text>
+            </View>
+          ) : null}
+
+          {message ? (
+            <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
+              <Text className="text-xs text-[#6e7a97]">{message}</Text>
+            </View>
+          ) : null}
+
+          {!loading && products.length === 0 ? (
+            <View className="mt-16 items-center rounded-2xl border border-[#dce7ff] bg-white p-6">
+              <Text className="text-sm text-[#6e7a97]">
+                No wishlist items yet
+              </Text>
+            </View>
+          ) : null}
+
+          {products.map((product) => (
+            <WishlistItem
+              key={product._id}
+              id={product._id}
+              name={product.name}
+              image={product.image}
+              price={product.price}
+              onRemove={removeFromWishlist}
+              onAddToCart={addToCart}
+            />
+          ))}
+        </ScrollView>
       </View>
-
-      <ScrollView
-        className="flex-1 px-4"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7f8ff5" />}
-        contentContainerStyle={{ paddingTop: 14, paddingBottom: 20 }}
-      >
-        {loading ? (
-          <View className="mt-16 items-center">
-            <ActivityIndicator size="large" color="#7f8ff5" />
-          </View>
-        ) : null}
-
-        {error ? (
-          <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
-            <Text className="text-xs text-[#6e7a97]">{error}</Text>
-          </View>
-        ) : null}
-
-        {message ? (
-          <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
-            <Text className="text-xs text-[#6e7a97]">{message}</Text>
-          </View>
-        ) : null}
-
-        {!loading && products.length === 0 ? (
-          <View className="mt-16 items-center rounded-2xl border border-[#dce7ff] bg-white p-6">
-            <Text className="text-sm text-[#6e7a97]">No wishlist items yet</Text>
-          </View>
-        ) : null}
-
-        {products.map((product) => (
-          <WishlistItem
-            key={product._id}
-            id={product._id}
-            name={product.name}
-            image={product.image}
-            price={product.price}
-            onRemove={removeFromWishlist}
-            onAddToCart={addToCart}
-          />
-        ))}
-      </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }

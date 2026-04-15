@@ -23,9 +23,9 @@ export default function CategoryList({ categories, onSeeAll }: CategoryListProps
   return (
     <View className="mt-4">
       <View className="mb-2 flex-row items-center justify-between">
-        <Text className="text-lg font-bold text-[#1f2a44]">Categories</Text>
+        <Text className="text-xl font-bold text-[#1f2a44]">Categories</Text>
         <Pressable onPress={onSeeAll}>
-          <Text className="text-xs font-semibold text-[#7382a8]">See All</Text>
+          <Text className="text-sm font-semibold mr-2 text-[#7382a8]">See All</Text>
         </Pressable>
       </View>
 
@@ -33,7 +33,7 @@ export default function CategoryList({ categories, onSeeAll }: CategoryListProps
         {(categories.length > 0 ? categories : []).map((category) => (
           <Pressable key={category._id} className="w-[72px] items-center">
             <View
-              className="h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[#dbe6ff] bg-white"
+              className="h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border border-[#dbe6ff] bg-white"
               style={{
                 shadowColor: "#bac7eb",
                 shadowOffset: { width: 0, height: 4 },
@@ -43,7 +43,7 @@ export default function CategoryList({ categories, onSeeAll }: CategoryListProps
               }}
             >
               {category.image ? (
-                <Image source={{ uri: category.image }} contentFit="cover" style={{ height: "100%", width: "100%" }} />
+                <Image source={{ uri: category.image }} contentFit="cover" style={{ height: "80%", width: "80%" }} />
               ) : (
                 <CategoryIcon name={category.name} />
               )}
