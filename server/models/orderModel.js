@@ -14,6 +14,10 @@ const orderItemSchema = mongoose.Schema({
         type: Number,
         required: true
     },
+    discountPercentage:{
+        type: Number,
+        default: 0
+    },
     quantity:{
         type: Number,
         required: true,
@@ -31,6 +35,18 @@ const orderSchema = mongoose.Schema({
         required: true   
     },
     items: [orderItemSchema],
+    subtotal: {
+        type: Number,
+        default: 0
+    },
+    taxAmount: {
+        type: Number,
+        default: 0
+    },
+    shippingFee: {
+        type: Number,
+        default: 0
+    },
     total:{
         type: Number,
         default: 0

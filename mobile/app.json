@@ -29,13 +29,6 @@
     "plugins": [
       "expo-router",
       [
-        "@stripe/stripe-react-native",
-        {
-          "merchantIdentifier": "merchant.com.bachabazar",
-          "enableGooglePay": true
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
@@ -51,9 +44,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "stripePublishableKey": ""
     }
   }
 }

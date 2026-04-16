@@ -15,6 +15,7 @@ import statsRouter from "./routes/statsRoute.js";
 import orderRouter from "./routes/orderRoutes.js";
 import cartRouter from "./routes/cartRoutes.js";
 import analyticsRouter from "./routes/analyticsRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
 
 // Load env vars
 dotenv.config();
@@ -88,6 +89,7 @@ app.use('/api/products',productRouter)
 app.use('/api/wishlist',wishlistRouter)
 app.use('/api/orders',orderRouter)
 app.use('/api/carts',cartRouter)
+app.use('/api/payment',paymentRouter)
 app.use('/api/email',emailRouter)
 app.use('/api/analytics',analyticsRouter)
 app.use('/api/stats',statsRouter)

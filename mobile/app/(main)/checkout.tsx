@@ -4,14 +4,22 @@ import ScreenWrapper from "@/components/common/ScreenWrapper";
 import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
 import { showErrorToast, showSuccessToast } from "@/lib/toast";
-// import { safeInitPaymentSheet, safePresentPaymentSheet } from "@/lib/stripeClient";
+import {
+  confirmPayment,
+  createStripeCheckoutSession,
+  updateOrderToPaid,
+  type StripeCheckoutItem,
+} from "@/services/payment.service";
 import { useStore } from "@/store/useStore";
 import { Address } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as WebBrowser from "expo-web-browser";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -24,6 +32,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type ProfileResponse = {
   _id: string;
   name: string;
+  email?: string;
   addresses: Address[];
 };
 
@@ -46,17 +55,16 @@ type CreateOrderResponse = {
   success: boolean;
   order: {
     _id: string;
+    subtotal?: number;
+    shippingFee?: number;
+    taxAmount?: number;
     total?: number;
   };
 };
 
-type PaymentIntentResponse = {
-  clientSecret?: string;
-  paymentIntentClientSecret?: string;
-  paymentIntentId?: string;
-  customerId?: string;
-  customerEphemeralKeySecret?: string;
-};
+const FREE_SHIPPING_THRESHOLD = 2000;
+const BASE_SHIPPING_FEE = 250;
+const TAX_RATE = 0.08;
 
 export default function CheckoutScreen() {
   const insets = useSafeAreaInsets();
@@ -66,12 +74,14 @@ export default function CheckoutScreen() {
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [items, setItems] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("Credit / Debit Card");
+  const [userEmail, setUserEmail] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPayment, setPendingPayment] = useState<{ orderId: string; amount: number } | null>(null);
 
   const [addingAddress, setAddingAddress] = useState(false);
   const [street, setStreet] = useState("");
@@ -99,6 +109,7 @@ export default function CheckoutScreen() {
       ]);
 
       setUserId(profileData._id);
+      setUserEmail(profileData.email || "");
       setAddresses(Array.isArray(profileData.addresses) ? profileData.addresses : []);
       const preferredAddress = profileData.addresses.find((address) => address.isDefault) || profileData.addresses[0];
       setSelectedAddressId(preferredAddress?._id || "");
@@ -178,72 +189,19 @@ export default function CheckoutScreen() {
     return items.reduce((sum, line) => sum + line.productId.price * line.quantity, 0);
   }, [items]);
 
-  const parsePaymentIntentId = (clientSecret: string) => {
-    const [firstPart] = clientSecret.split("_secret");
-    return firstPart || "";
-  };
+  const pricing = useMemo(() => {
+    const subtotal = getOrderTotal;
+    const shippingFee = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : BASE_SHIPPING_FEE;
+    const taxAmount = Math.round(subtotal * TAX_RATE);
+    const total = subtotal + shippingFee + taxAmount;
 
-  const createPaymentIntent = async (orderId: string, amount: number, token: string) => {
-    return await apiRequest<PaymentIntentResponse>(
-      "/api/payment/create-intent",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          orderId,
-          order_id: orderId,
-          amount,
-          currency: "pkr",
-          paymentMethod,
-        }),
-      },
-      token,
-    );
-  };
-
-  const confirmPaymentOnBackend = async (orderId: string, paymentIntentId: string, token: string) => {
-    await apiRequest<{ success?: boolean; message?: string }>(
-      "/api/payment/confirm",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          orderId,
-          order_id: orderId,
-          paymentIntentId,
-          status: "succeeded",
-        }),
-      },
-      token,
-    );
-  };
-
-  const markOrderPaid = async (orderId: string, paymentIntentId: string, token: string) => {
-    try {
-      await apiRequest<{ success?: boolean }>(
-        "/api/orders/update-status",
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            orderId,
-            status: "paid",
-            paymentIntentId,
-          }),
-        },
-        token,
-      );
-    } catch {
-      await apiRequest<{ success?: boolean }>(
-        `/api/orders/${orderId}/status`,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            status: "paid",
-            paymentIntentId,
-          }),
-        },
-        token,
-      );
-    }
-  };
+    return {
+      subtotal,
+      shippingFee,
+      taxAmount,
+      total,
+    };
+  }, [getOrderTotal]);
 
   const clearCartAfterCheckout = async (token: string) => {
     try {
@@ -253,7 +211,7 @@ export default function CheckoutScreen() {
     }
   };
 
-  const navigateToSuccess = (orderId: string, amount: number) => {
+  const navigateToSuccess = (orderId: string, amount: number, paymentId?: string) => {
     const addressLabel = selectedAddress
       ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country} ${selectedAddress.postalCode}`
       : "N/A";
@@ -264,78 +222,95 @@ export default function CheckoutScreen() {
         orderId,
         total: String(amount),
         paymentMethod,
+        paymentId: paymentId || "",
         address: addressLabel,
       },
     });
   };
 
-  const payWithStripe = async (orderId: string, amount: number, token: string) => {
-    const intentResponse = await createPaymentIntent(orderId, amount, token);
+  const openCheckoutBrowser = async (checkoutUrl: string) => {
+    const returnUrl = Linking.createURL("/payment-success");
+    const authResult = await WebBrowser.openAuthSessionAsync(checkoutUrl, returnUrl);
 
-    const clientSecret = intentResponse.clientSecret || intentResponse.paymentIntentClientSecret;
-    if (!clientSecret) {
-      throw new Error("Payment intent client secret not received");
+    if (authResult.type === "cancel" || authResult.type === "dismiss") {
+      throw new Error("Payment cancelled by user.");
     }
 
-    // let initResult;
-
-    // try {
-    //   // initResult = await safeInitPaymentSheet({
-    //   //   merchantDisplayName: "Bacha Bazar",
-    //   //   paymentIntentClientSecret: clientSecret,
-    //   //   customerId: intentResponse.customerId,
-    //   //   customerEphemeralKeySecret: intentResponse.customerEphemeralKeySecret,
-    //   //   allowsDelayedPaymentMethods: false,
-    //   //   defaultBillingDetails: {
-    //   //     name: "Bacha Bazar Customer",
-    //   //   },
-    //   // });
-    // } catch {
-    //   throw new Error("Stripe SDK is not available in this build. Please use a development build instead of Expo Go.");
-    // }
-
-    // if (initResult.error) {
-    //   throw new Error(initResult.error.message);
-    // }
-
-    // const sheetResult = await safePresentPaymentSheet();
-
-    // if (sheetResult.error) {
-    //   if (sheetResult.error.code === "Canceled") {
-    //     showErrorToast("Payment cancelled", "You cancelled the payment flow.");
-    //     return { paid: false, cancelled: true };
-    //   }
-
-    //   throw new Error(sheetResult.error.message);
-    // }
-
-    const paymentIntentId = intentResponse.paymentIntentId || parsePaymentIntentId(clientSecret);
-    if (!paymentIntentId) {
-      throw new Error("Payment intent id missing after payment.");
+    if (authResult.type !== "success") {
+      throw new Error("Unable to complete payment session.");
     }
 
-    await confirmPaymentOnBackend(orderId, paymentIntentId, token);
-    await markOrderPaid(orderId, paymentIntentId, token);
+    const parsed = Linking.parse(authResult.url);
+    const queryStatus =
+      typeof parsed.queryParams?.status === "string"
+        ? parsed.queryParams.status.toLowerCase()
+        : "";
 
-    return { paid: true, cancelled: false };
+    if (queryStatus === "cancel") {
+      throw new Error("Payment cancelled by user.");
+    }
   };
 
-  const placeOrder = async () => {
-    if (!agreed) {
-      setError("Please agree to Terms & Conditions");
-      showErrorToast("Terms required", "Please agree to Terms & Conditions.");
-      return;
+  const handleStripeSessionPayment = async (orderId: string, amount: number, token: string) => {
+    const stripeItems: StripeCheckoutItem[] = items.map((line) => ({
+      name: line.productId.name,
+      description: `Quantity: ${line.quantity}`,
+      amount: Math.round(line.productId.price * 100),
+      currency: "pkr",
+      quantity: line.quantity,
+      images: line.productId.image ? [line.productId.image] : [],
+    }));
+
+    const successUrl = Linking.createURL("/payment-success", {
+      queryParams: { orderId },
+    });
+    const cancelUrl = Linking.createURL("/checkout", {
+      queryParams: { orderId, status: "cancel" },
+    });
+
+    const stripeResponse = await createStripeCheckoutSession(
+      {
+        orderId,
+        items: stripeItems,
+        customerEmail: userEmail,
+        successUrl,
+        cancelUrl,
+        metadata: {
+          orderId,
+        },
+        currency: "pkr",
+      },
+      token,
+    );
+
+    if (!stripeResponse.success || !stripeResponse.url) {
+      throw new Error(stripeResponse.message || "Failed to initialize payment");
     }
 
-    if (!selectedAddress) {
-      setError("Please select or add an address");
-      showErrorToast("Address required", "Please select or add an address.");
-      return;
-    }
+    await openCheckoutBrowser(stripeResponse.url);
 
-    if (!items.length) {
-      setError("Your cart is empty");
-      showErrorToast("Cart is empty", "Add items before placing order.");
+    const confirmResult = await confirmPayment(
+      {
+        orderId,
+        sessionId: stripeResponse.sessionId,
+        paymentIntentId: stripeResponse.paymentIntentId,
+      },
+      token,
+    );
+
+    const resolvedPaymentIntentId = confirmResult.paymentIntentId || stripeResponse.paymentIntentId;
+
+    await updateOrderToPaid(orderId, resolvedPaymentIntentId, stripeResponse.sessionId, token);
+
+    return {
+      paymentIntentId: resolvedPaymentIntentId || "",
+      sessionId: stripeResponse.sessionId || "",
+      amount,
+    };
+  };
+
+  const retryPendingPayment = async () => {
+    if (!pendingPayment) {
       return;
     }
 
@@ -350,10 +325,67 @@ export default function CheckoutScreen() {
       setPaymentLoading(true);
       setError(null);
 
+      const retryResult = await handleStripeSessionPayment(
+        pendingPayment.orderId,
+        pendingPayment.amount,
+        token,
+      );
+
+      await clearCartAfterCheckout(token);
+      await refreshCounts();
+      setPendingPayment(null);
+      showSuccessToast("Payment completed", "Your payment has been verified.");
+      navigateToSuccess(pendingPayment.orderId, pendingPayment.amount, retryResult.paymentIntentId || retryResult.sessionId);
+    } catch (requestError) {
+      const message = requestError instanceof Error ? requestError.message : "Payment retry failed";
+      setError(message);
+      Alert.alert("Payment Error", message);
+      showErrorToast("Retry failed", message);
+    } finally {
+      setPaymentLoading(false);
+      setPlacing(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!agreed) {
+      setError("Please agree to Terms & Conditions");
+      showErrorToast("Terms required", "Please agree to Terms & Conditions.");
+      Alert.alert("Error", "Please agree to Terms & Conditions");
+      return;
+    }
+
+    if (!selectedAddress) {
+      setError("Please select or add an address");
+      showErrorToast("Address required", "Please select or add an address.");
+      Alert.alert("Error", "Please select a shipping address");
+      return;
+    }
+
+    if (!items.length) {
+      setError("Your cart is empty");
+      showErrorToast("Cart is empty", "Add items before placing order.");
+      Alert.alert("Error", "Your cart is empty");
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      router.replace("/login");
+      Alert.alert("Error", "You must be logged in to checkout");
+      return;
+    }
+
+    try {
+      setPlacing(true);
+      setPaymentLoading(true);
+      setError(null);
+
       const payloadItems = items.map((line) => ({
         _id: line.productId._id,
         name: line.productId.name,
         price: line.productId.price,
+        discountPercentage: line.productId.discountPercentage ?? 0,
         quantity: line.quantity,
         image: line.productId.image,
       }));
@@ -371,28 +403,36 @@ export default function CheckoutScreen() {
               postalCode: selectedAddress.postalCode,
             },
             paymentMethod,
+            pricing,
           }),
         },
         token,
       );
 
       const orderId = response.order._id;
-      const amount = response.order.total ?? getOrderTotal;
+      const amount = response.order.total ?? pricing.total;
 
       if (paymentMethod !== "Cash on Delivery") {
-        const paymentResult = await payWithStripe(orderId, amount, token);
-        if (paymentResult.cancelled) {
-          return;
-        }
+        setPendingPayment({ orderId, amount });
+        const paymentResult = await handleStripeSessionPayment(orderId, amount, token);
+        setPendingPayment(null);
+
+        await clearCartAfterCheckout(token);
+        await refreshCounts();
+        showSuccessToast("Payment completed", "Your order has been paid successfully.");
+        navigateToSuccess(orderId, amount, paymentResult.paymentIntentId || paymentResult.sessionId);
+        return;
       }
 
       await clearCartAfterCheckout(token);
       await refreshCounts();
-      showSuccessToast("Order confirmed", "Your payment/order was processed successfully.");
+      showSuccessToast("Order confirmed", "Your order was placed successfully.");
       navigateToSuccess(orderId, amount);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Failed to place order");
-      showErrorToast("Checkout failed", requestError instanceof Error ? requestError.message : "Please try again.");
+      const message = requestError instanceof Error ? requestError.message : "Failed to place order";
+      setError(message);
+      showErrorToast("Checkout failed", message);
+      Alert.alert("Payment Error", message);
     } finally {
       setPaymentLoading(false);
       setPlacing(false);
@@ -417,6 +457,11 @@ export default function CheckoutScreen() {
         {error ? (
           <View className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
             <Text className="text-sm text-gray-500">{error}</Text>
+            {pendingPayment ? (
+              <Pressable onPress={retryPendingPayment} disabled={placing || paymentLoading} className="mt-3 items-center rounded-2xl bg-[#eaf0ff] py-2">
+                <Text className="text-xs font-semibold text-[#3f54ac]">Retry Payment</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
 
@@ -498,7 +543,7 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 border-t border-[#dbe6ff] bg-white px-4 pt-3" style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
-        <Pressable onPress={placeOrder} disabled={placing || paymentLoading} className={`items-center rounded-2xl py-3 ${placing || paymentLoading ? "bg-[#98a8e8]" : "bg-[#7d8ff6]"}`}>
+        <Pressable onPress={handlePayment} disabled={placing || paymentLoading} className={`items-center rounded-2xl py-3 ${placing || paymentLoading ? "bg-[#98a8e8]" : "bg-[#7d8ff6]"}`}>
           {placing || paymentLoading ? <ActivityIndicator size="small" color="#ffffff" /> : <Text className="text-sm font-bold text-white">Place Order</Text>}
         </Pressable>
       </View>

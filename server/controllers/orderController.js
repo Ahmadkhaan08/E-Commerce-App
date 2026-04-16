@@ -3,6 +3,10 @@ import mongoose from "mongoose";
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 
+const FREE_SHIPPING_THRESHOLD = 2000;
+const BASE_SHIPPING_FEE = 250;
+const TAX_RATE = 0.08;
+
 // Create order from Cart
 export const createOrderFromCart = asyncHandler(async (req, res) => {
   const { items, shippingAddress } = req.body;
@@ -32,24 +36,42 @@ export const createOrderFromCart = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error("Invalid item structure");
     }
+
+    const rawDiscount = Number(item.discountPercentage ?? 0);
+    const discountPercentage = Number.isFinite(rawDiscount)
+      ? Math.min(100, Math.max(0, rawDiscount))
+      : 0;
+
     return {
       productId: item._id,
       name: item.name,
-      price: item.price,
+      price: Number(item.price),
+      discountPercentage,
       quantity: item.quantity,
       image: item.image,
     };
   });
 
-  //   Calculate Total
-  const total = validateItems.reduce((acc, item) => {
-    return acc + item.price * item.quantity;
+  // Calculate pricing breakdown.
+  const subtotal = validateItems.reduce((acc, item) => {
+    const effectiveUnitPrice = Math.max(
+      Math.round(item.price - (item.price * item.discountPercentage) / 100),
+      0,
+    );
+    return acc + effectiveUnitPrice * item.quantity;
   }, 0);
+
+  const shippingFee = subtotal > FREE_SHIPPING_THRESHOLD ? 0 : BASE_SHIPPING_FEE;
+  const taxAmount = Math.round(subtotal * TAX_RATE);
+  const total = subtotal + shippingFee + taxAmount;
 
   //   Create Order
   const order = await orderModel.create({
     userId: req.user._id,
     items: validateItems,
+    subtotal,
+    shippingFee,
+    taxAmount,
     total: total,
     status: "pending",
     shippingAddress,
@@ -62,21 +84,23 @@ export const createOrderFromCart = asyncHandler(async (req, res) => {
   });
 });
 
-// update orders
-export const updateOrder = asyncHandler(async (req, res) => {
-  const { status, paymentIntentId, stripeSessionId } = req.body;
+const applyOrderStatusUpdate = async ({
+  orderId,
+  status,
+  paymentIntentId,
+  stripeSessionId,
+  user,
+}) => {
   const validateStatuses = ["pending", "paid", "completed", "cancelled"];
 
   if (!status || !validateStatuses.includes(status)) {
-    res.status(400);
     throw new Error(
       "Invalid status. Must be one of: pending, paid, completed, cancelled",
     );
   }
 
-  const order = await orderModel.findById(req.params.id);
+  const order = await orderModel.findById(orderId);
   if (!order) {
-    res.status(404);
     throw new Error("Order not found");
   }
 
@@ -92,14 +116,13 @@ export const updateOrder = asyncHandler(async (req, res) => {
   // - Users can only update their own orders when status is "pending"
   // - Admins can update any order at any time
   // - Webhook calls (no req.user) are always allowed
-  if (req.user) {
-    const isOwner = order.userId.toString() === req.user._id.toString();
-    const isAdmin = req.user.role === "admin";
+  if (user) {
+    const isOwner = order.userId.toString() === user._id.toString();
+    const isAdmin = user.role === "admin";
     const isPending = order.status === "pending";
 
     // If user is not admin and (not owner OR order is not pending), deny access
     if (!isAdmin && (!isPending || !isOwner)) {
-      res.status(403);
       throw new Error(
         isPending
           ? "Not authorized to update this order"
@@ -127,13 +150,79 @@ export const updateOrder = asyncHandler(async (req, res) => {
 
   // Use findByIdAndUpdate to avoid full document validation
   const updatedOrder = await orderModel.findByIdAndUpdate(
-    req.params.id,
+    orderId,
     updateData,
     {
       new: true,
       runValidators: false,
     },
   );
+
+  return updatedOrder;
+};
+
+// update orders
+export const updateOrder = asyncHandler(async (req, res) => {
+  const { status, paymentIntentId, stripeSessionId } = req.body;
+
+  let updatedOrder;
+  try {
+    updatedOrder = await applyOrderStatusUpdate({
+      orderId: req.params.id,
+      status,
+      paymentIntentId,
+      stripeSessionId,
+      user: req.user,
+    });
+  } catch (error) {
+    if (error.message === "Order not found") {
+      res.status(404);
+    } else if (
+      error.message.includes("Invalid status") ||
+      error.message.includes("Not authorized") ||
+      error.message.includes("Order status can only")
+    ) {
+      res.status(error.message.includes("Invalid status") ? 400 : 403);
+    }
+    throw error;
+  }
+
+  res.json({
+    success: true,
+    order: updatedOrder,
+    message: `Order status updated to ${status}`,
+  });
+});
+
+export const updateOrderByOrderId = asyncHandler(async (req, res) => {
+  const { orderId, status, paymentIntentId, stripeSessionId } = req.body;
+
+  if (!orderId) {
+    res.status(400);
+    throw new Error("orderId is required");
+  }
+
+  let updatedOrder;
+  try {
+    updatedOrder = await applyOrderStatusUpdate({
+      orderId,
+      status,
+      paymentIntentId,
+      stripeSessionId,
+      user: req.user,
+    });
+  } catch (error) {
+    if (error.message === "Order not found") {
+      res.status(404);
+    } else if (
+      error.message.includes("Invalid status") ||
+      error.message.includes("Not authorized") ||
+      error.message.includes("Order status can only")
+    ) {
+      res.status(error.message.includes("Invalid status") ? 400 : 403);
+    }
+    throw error;
+  }
 
   res.json({
     success: true,
