@@ -13,6 +13,7 @@ import {
   getAuthToken,
   toggleWishlistProduct,
 } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { Banners, Brand, Category, Product } from "@/types/type";
 import { router } from "expo-router";
@@ -98,7 +99,6 @@ export default function Index() {
   // Wishlist + Cart interaction state
   const [wishlistSet, setWishlistSet] = useState<Set<string>>(new Set());
   const [pendingCartId, setPendingCartId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const loadWishlist = useCallback(async () => {
     const token = getAuthToken();
@@ -203,13 +203,6 @@ export default function Index() {
     run();
   }, [loadHomeData]);
 
-  // Auto-dismiss feedback message
-  useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(() => setMessage(null), 2500);
-    return () => clearTimeout(timer);
-  }, [message]);
-
   const toggleWishlist = async (productId: string) => {
     const token = getAuthToken();
     if (!token) {
@@ -241,7 +234,11 @@ export default function Index() {
         }
         return next;
       });
-      setMessage(nextWishlisted ? "Added to wishlist ❤️" : "Removed from wishlist");
+      if (nextWishlisted) {
+        showSuccessToast("Wishlist updated", "Added to wishlist.");
+      } else {
+        showSuccessToast("Wishlist updated", "Removed from wishlist.");
+      }
       await refreshCounts();
     } catch {
       // Revert optimistic update
@@ -254,7 +251,7 @@ export default function Index() {
         }
         return next;
       });
-      setMessage("Could not update wishlist");
+      showErrorToast("Wishlist update failed", "Please try again.");
     }
   };
 
@@ -268,10 +265,10 @@ export default function Index() {
     try {
       setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
-      setMessage("Added to cart 🛒");
+      showSuccessToast("Added to cart", "Item added successfully.");
       await refreshCounts();
     } catch {
-      setMessage("Could not add to cart");
+      showErrorToast("Add to cart failed", "Please try again.");
     } finally {
       setPendingCartId(null);
     }
@@ -305,13 +302,6 @@ export default function Index() {
                 {error ? (
                   <View className="mt-4 rounded-2xl border border-[#dce7ff] bg-[#f8fbff] p-3">
                     <Text className="text-xs font-medium text-[#6e7a97]">{error}</Text>
-                  </View>
-                ) : null}
-
-                {/* Toast-style feedback */}
-                {message ? (
-                  <View className="mt-3 rounded-2xl border border-[#c8dcff] bg-[#eaf2ff] px-4 py-2.5">
-                    <Text className="text-center text-xs font-semibold text-[#3b5998]">{message}</Text>
                   </View>
                 ) : null}
 

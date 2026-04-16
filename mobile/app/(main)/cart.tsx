@@ -2,6 +2,7 @@ import CartItem from "@/components/shop/CartItem";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import SkeletonBox from "@/skeleton/SkeletonBox";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -126,8 +127,10 @@ export default function CartScreen() {
       );
 
       await loadCart();
+      showSuccessToast("Cart updated", "Item quantity updated.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to update cart");
+      showErrorToast("Update failed", requestError instanceof Error ? requestError.message : "Failed to update cart.");
     } finally {
       setPendingItemId(null);
     }
@@ -144,8 +147,10 @@ export default function CartScreen() {
       setPendingItemId(productId);
       await apiRequest<CartResponse>(`/api/carts/${productId}`, { method: "DELETE" }, token);
       await loadCart();
+      showSuccessToast("Removed from cart", "Item removed successfully.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to remove item");
+      showErrorToast("Remove failed", requestError instanceof Error ? requestError.message : "Failed to remove item.");
     } finally {
       setPendingItemId(null);
     }

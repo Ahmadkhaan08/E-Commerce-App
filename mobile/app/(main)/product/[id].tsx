@@ -2,6 +2,7 @@ import ProductImageCarousel from "@/components/shop/ProductImageCarousel";
 import QuantitySelector from "@/components/shop/QuantitySelector";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,8 @@ export default function ProductDetailsScreen() {
   const [expanded, setExpanded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
 
   const loadProduct = useCallback(async () => {
     if (!id) {
@@ -73,7 +76,7 @@ export default function ProductDetailsScreen() {
   }, [product]);
 
   const addToCart = async () => {
-    if (!product) {
+    if (!product || addingToCart) {
       return;
     }
 
@@ -81,19 +84,25 @@ export default function ProductDetailsScreen() {
       const token = getAuthToken();
       if (!token) {
         setActionMessage("Login required to add to cart");
+        showErrorToast("Login required", "Please login to add this item to cart.");
         return;
       }
 
+      setAddingToCart(true);
       await addProductToCart(product._id, quantity, token);
       await refreshCounts();
       setActionMessage("Added to cart");
+      showSuccessToast("Added to cart", `${product.name} added successfully.`);
     } catch (requestError) {
       setActionMessage(requestError instanceof Error ? requestError.message : "Failed to add to cart");
+      showErrorToast("Add to cart failed", requestError instanceof Error ? requestError.message : "Please try again.");
+    } finally {
+      setAddingToCart(false);
     }
   };
 
   const toggleWishlist = async () => {
-    if (!product) {
+    if (!product || togglingWishlist) {
       return;
     }
 
@@ -101,15 +110,21 @@ export default function ProductDetailsScreen() {
       const token = getAuthToken();
       if (!token) {
         setActionMessage("Login required to update wishlist");
+        showErrorToast("Login required", "Please login to update wishlist.");
         return;
       }
 
+      setTogglingWishlist(true);
       const nextWishlisted = await toggleWishlistProduct(product._id, isWishlisted, token);
       setIsWishlisted(nextWishlisted);
       await refreshCounts();
       setActionMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
+      showSuccessToast("Wishlist updated", nextWishlisted ? "Item added to wishlist." : "Item removed from wishlist.");
     } catch (requestError) {
       setActionMessage(requestError instanceof Error ? requestError.message : "Failed to update wishlist");
+      showErrorToast("Wishlist update failed", requestError instanceof Error ? requestError.message : "Please try again.");
+    } finally {
+      setTogglingWishlist(false);
     }
   };
 
@@ -132,8 +147,16 @@ export default function ProductDetailsScreen() {
           <Pressable className="h-8 w-8 items-center justify-center rounded-full bg-[#f1f5ff]">
             <Feather name="search" size={15} color="#7583a8" />
           </Pressable>
-          <Pressable onPress={toggleWishlist} className="h-8 w-8 items-center justify-center rounded-full bg-[#f1f5ff]">
-            <Ionicons name={isWishlisted ? "heart" : "heart-outline"} size={16} color={isWishlisted ? "#ff6f90" : "#7583a8"} />
+          <Pressable
+            onPress={toggleWishlist}
+            disabled={togglingWishlist}
+            className={`h-8 w-8 items-center justify-center rounded-full ${togglingWishlist ? "bg-[#e7ecfb]" : "bg-[#f1f5ff]"}`}
+          >
+            {togglingWishlist ? (
+              <ActivityIndicator size="small" color="#7583a8" />
+            ) : (
+              <Ionicons name={isWishlisted ? "heart" : "heart-outline"} size={16} color={isWishlisted ? "#ff6f90" : "#7583a8"} />
+            )}
           </Pressable>
         </View>
       </View>
@@ -191,8 +214,13 @@ export default function ProductDetailsScreen() {
             onIncrease={() => setQuantity((prev) => prev + 1)}
           />
 
-          <Pressable onPress={addToCart} className="flex-1 items-center justify-center rounded-2xl bg-[#7f8ff5] py-3">
-            <Text className="text-sm font-bold text-white">Add to Cart</Text>
+          <Pressable
+            onPress={addToCart}
+            disabled={addingToCart}
+            className={`flex-1 flex-row items-center justify-center rounded-2xl py-3 ${addingToCart ? "bg-[#98a5e8]" : "bg-[#7f8ff5]"}`}
+          >
+            {addingToCart ? <ActivityIndicator size="small" color="#ffffff" /> : null}
+            <Text className={`text-sm font-bold text-white ${addingToCart ? "ml-2" : ""}`}>{addingToCart ? "Adding..." : "Add to Cart"}</Text>
           </Pressable>
         </View>
       </View>

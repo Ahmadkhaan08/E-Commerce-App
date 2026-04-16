@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { Product } from "@/types/type";
@@ -45,10 +45,16 @@ export default function ProductCard({
       <View className={layout === "list" ? "ml-3 flex-1" : "mt-2"}>
         <View className="flex-row items-start justify-between">
           <Text className="flex-1 pr-2 text-base font-bold text-[#1f2a44]" numberOfLines={2}>
-            {product.name}
+            {product.name }
           </Text>
           {onToggleWishlist ? (
-            <Pressable onPress={onToggleWishlist} className="h-8 w-8 items-center justify-center rounded-full bg-[#f2f6ff]">
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                onToggleWishlist();
+              }}
+              className="h-8 w-8 items-center justify-center rounded-full bg-[#f2f6ff]"
+            >
               <Ionicons name={wishlisted ? "heart" : "heart-outline"} size={17} color={wishlisted ? "#f05a7e" : "#7082b3"} />
             </Pressable>
           ) : null}
@@ -74,11 +80,15 @@ export default function ProductCard({
 
         {onAddToCart ? (
           <Pressable
-            onPress={onAddToCart}
+            onPress={(event) => {
+              event.stopPropagation();
+              onAddToCart();
+            }}
             disabled={addingToCart}
-            className="mt-3 items-center rounded-2xl bg-[#6d84ef] py-2.5"
+            className={`mt-3 flex-row items-center justify-center rounded-2xl py-2.5 ${addingToCart ? "bg-[#95a7ee]" : "bg-[#6d84ef]"}`}
           >
-            <Text className="text-sm font-bold text-white">{addingToCart ? "Adding..." : "Add to Cart"}</Text>
+            {addingToCart ? <ActivityIndicator size="small" color="#ffffff" /> : null}
+            <Text className={`text-sm font-bold text-white ${addingToCart ? "ml-2" : ""}`}>{addingToCart ? "Adding..." : "Add to Cart"}</Text>
           </Pressable>
         ) : null}
       </View>

@@ -233,3 +233,117 @@ export async function getCartItemCount(token?: string) {
 
   return data.cart.reduce((sum, line) => sum + (line.quantity ?? 0), 0);
 }
+
+export type UserAddress = {
+  _id: string;
+  street: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  isDefault?: boolean;
+};
+
+export type UserProfile = {
+  _id: string;
+  name: string;
+  email?: string;
+  avatar?: string;
+  addresses?: UserAddress[];
+};
+
+export type ProfileUpdateInput = {
+  name?: string;
+  email?: string;
+  avatar?: string;
+  password?: string;
+};
+
+export type AddressInput = {
+  street: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  isDefault?: boolean;
+};
+
+type AddressMutationResponse = {
+  success?: boolean;
+  message?: string;
+  addresses?: UserAddress[];
+};
+
+export async function getMyProfile(token?: string) {
+  return await apiRequest<UserProfile>("/api/auth/profile", undefined, token);
+}
+
+export async function updateMyProfile(payload: ProfileUpdateInput, token?: string) {
+  try {
+    return await apiRequest<UserProfile>(
+      "/api/user/update",
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+      token,
+    );
+  } catch {
+    const profile = await getMyProfile(token);
+    return await apiRequest<UserProfile>(
+      `/api/users/${profile._id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      },
+      token,
+    );
+  }
+}
+
+export async function addUserAddress(address: AddressInput, token?: string) {
+  try {
+    return await apiRequest<AddressMutationResponse>(
+      "/api/address/add",
+      {
+        method: "POST",
+        body: JSON.stringify(address),
+      },
+      token,
+    );
+  } catch {
+    const profile = await getMyProfile(token);
+    return await apiRequest<AddressMutationResponse>(
+      `/api/users/${profile._id}/address`,
+      {
+        method: "POST",
+        body: JSON.stringify(address),
+      },
+      token,
+    );
+  }
+}
+
+export async function updateUserAddress(addressId: string, address: Partial<AddressInput>, token?: string) {
+  try {
+    return await apiRequest<AddressMutationResponse>(
+      "/api/address/update",
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          addressId,
+          ...address,
+        }),
+      },
+      token,
+    );
+  } catch {
+    const profile = await getMyProfile(token);
+    return await apiRequest<AddressMutationResponse>(
+      `/api/users/${profile._id}/address/${addressId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(address),
+      },
+      token,
+    );
+  }
+}

@@ -35,8 +35,8 @@ export default function Header({ logoUri }: HeaderProps) {
     staleTime: 30000,
   });
 
-  const submitSearch = () => {
-    const term = query.trim();
+  const submitSearch = (value: string) => {
+    const term = value.trim();
     if (!term) {
       router.push("/(main)/search");
       return;
@@ -92,14 +92,14 @@ export default function Header({ logoUri }: HeaderProps) {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            onSubmitEditing={submitSearch}
+            onSubmitEditing={()=>submitSearch(query)}
             placeholder="Search baby products, diapers, toys..."
             placeholderTextColor="#8c99b8"
             className="ml-2 flex-1 text-base font-medium text-[#1f2a44]"
             returnKeyType="search"
           />
           <Pressable
-            onPress={submitSearch}
+            onPress={()=>submitSearch(query)}
             className="rounded-full bg-[#6b80ea] px-3 py-1"
           >
             <Text className="text-xs font-bold text-white">Search</Text>

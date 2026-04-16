@@ -1,15 +1,18 @@
 import ProfileOption from "@/components/shop/ProfileOption";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { apiRequest, clearAuthToken, getAuthToken } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Image } from "expo-image";
 
 type ProfileResponse = {
   _id: string;
   name: string;
   email: string;
+  avatar?: string;
 };
 
 type OrdersResponse = {
@@ -18,11 +21,11 @@ type OrdersResponse = {
 
 export default function ProfileScreen() {
   const [name, setName] = useState("Guest");
+  const [avatar, setAvatar] = useState("");
   const [ordersCount, setOrdersCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
@@ -52,6 +55,7 @@ export default function ProfileScreen() {
 
       if (profileResult.status === "fulfilled") {
         setName(profileResult.value.name || "User");
+        setAvatar(profileResult.value.avatar || "");
       }
 
       if (ordersResult.status === "fulfilled") {
@@ -65,6 +69,7 @@ export default function ProfileScreen() {
       }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to load profile");
+      showErrorToast("Profile load failed", requestError instanceof Error ? requestError.message : undefined);
     }
   }, []);
 
@@ -92,18 +97,19 @@ export default function ProfileScreen() {
     try {
       const token = getAuthToken();
       if (!token) {
-        setMessage("Already logged out");
+        showSuccessToast("Logged out", "You are already signed out.");
         return;
       }
 
       await apiRequest<{ message?: string }>("/api/auth/logout", { method: "POST" }, token);
       await clearAuthToken();
       setName("Guest");
+      setAvatar("");
       setOrdersCount(0);
-      setMessage("Logged out successfully");
+      showSuccessToast("Logged out", "You have been signed out successfully.");
       router.replace("/login");
     } catch (requestError) {
-      setMessage(requestError instanceof Error ? requestError.message : "Failed to logout");
+      showErrorToast("Logout failed", requestError instanceof Error ? requestError.message : "Please try again.");
     }
   };
 
@@ -128,8 +134,14 @@ export default function ProfileScreen() {
               <Text className="text-3xl font-extrabold text-[#1f2a44]">Hello, {name}!</Text>
               <Text className="mt-1 text-sm text-[#6e7a97]">You have {ordersCount} orders</Text>
             </View>
-            <View className="h-11 w-11 items-center justify-center rounded-full bg-[#d7e9ff]">
-              <Text className="text-base font-extrabold text-[#294a7b]">{name.slice(0, 1).toUpperCase()}</Text>
+            <View className="h-12 w-12 overflow-hidden rounded-full bg-[#d7e9ff]">
+              {avatar ? (
+                <Image source={{ uri: avatar }} contentFit="cover" style={{ width: "100%", height: "100%" }} />
+              ) : (
+                <View className="h-full w-full items-center justify-center">
+                  <Text className="text-base font-extrabold text-[#294a7b]">{name.slice(0, 1).toUpperCase()}</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -149,12 +161,6 @@ export default function ProfileScreen() {
           {error ? (
             <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
               <Text className="text-xs text-[#6e7a97]">{error}</Text>
-            </View>
-          ) : null}
-
-          {message ? (
-            <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
-              <Text className="text-xs text-[#6e7a97]">{message}</Text>
             </View>
           ) : null}
 

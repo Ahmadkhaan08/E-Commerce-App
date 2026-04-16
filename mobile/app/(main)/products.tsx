@@ -1,6 +1,7 @@
 import ProductCard from "@/components/shop/ProductCard";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -28,7 +29,6 @@ export default function ProductListingScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [pendingCartId, setPendingCartId] = useState<string | null>(null);
 
   const canLoadMore = useMemo(() => products.length < total, [products.length, total]);
@@ -116,10 +116,14 @@ export default function ProductListingScreen() {
         }
         return next;
       });
-      setMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
+      if (nextWishlisted) {
+        showSuccessToast("Wishlist updated", "Added to wishlist.");
+      } else {
+        showSuccessToast("Wishlist updated", "Removed from wishlist.");
+      }
       await refreshCounts();
     } catch {
-      setMessage("Could not update wishlist");
+      showErrorToast("Wishlist update failed", "Please try again.");
     }
   };
 
@@ -133,10 +137,10 @@ export default function ProductListingScreen() {
     try {
       setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
-      setMessage("Added to cart");
+      showSuccessToast("Added to cart", "Item added successfully.");
       await refreshCounts();
     } catch {
-      setMessage("Could not add to cart");
+      showErrorToast("Add to cart failed", "Please try again.");
     } finally {
       setPendingCartId(null);
     }
@@ -181,11 +185,7 @@ export default function ProductListingScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20, gap: 10 }}
           ListHeaderComponent={
-            message ? (
-              <View className="mb-3 rounded-2xl border border-[#dce7ff] bg-white p-3">
-                <Text className="text-sm text-[#5f6f94]">{message}</Text>
-              </View>
-            ) : null
+            null
           }
           renderItem={({ item }) => (
             <ProductCard

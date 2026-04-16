@@ -6,6 +6,7 @@ import {
   apiRequest,
   getAuthToken,
 } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { router } from "expo-router";
@@ -59,7 +60,6 @@ export default function WishlistScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [pendingCartId, setPendingCartId] = useState<string | null>(null);
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
@@ -73,13 +73,6 @@ export default function WishlistScreen() {
 
     setAuthReady(true);
   }, []);
-
-  // Auto-dismiss feedback message
-  useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(() => setMessage(null), 3000);
-    return () => clearTimeout(timer);
-  }, [message]);
 
   const loadWishlist = useCallback(async () => {
     try {
@@ -165,14 +158,10 @@ export default function WishlistScreen() {
         token,
       );
 
-      setMessage("Item removed from wishlist");
+      showSuccessToast("Wishlist updated", "Item removed from wishlist.");
       await loadWishlist();
     } catch (requestError) {
-      setMessage(
-        requestError instanceof Error
-          ? requestError.message
-          : "Failed to remove item",
-      );
+      showErrorToast("Remove failed", requestError instanceof Error ? requestError.message : "Failed to remove item.");
     } finally {
       setPendingRemoveId(null);
     }
@@ -190,13 +179,9 @@ export default function WishlistScreen() {
       await addProductToCart(productId, 1, token);
       await refreshCounts();
 
-      setMessage("Added to cart 🛒");
+      showSuccessToast("Added to cart", "Item added successfully.");
     } catch (requestError) {
-      setMessage(
-        requestError instanceof Error
-          ? requestError.message
-          : "Failed to add to cart",
-      );
+      showErrorToast("Add to cart failed", requestError instanceof Error ? requestError.message : "Failed to add item.");
     } finally {
       setPendingCartId(null);
     }
@@ -231,12 +216,6 @@ export default function WishlistScreen() {
           {error ? (
             <View className="mb-4 rounded-2xl border border-[#dce7ff] bg-white p-3">
               <Text className="text-xs text-[#6e7a97]">{error}</Text>
-            </View>
-          ) : null}
-
-          {message ? (
-            <View className="mb-4 rounded-2xl border border-[#c8dcff] bg-[#eaf2ff] px-4 py-2.5">
-              <Text className="text-center text-xs font-semibold text-[#3b5998]">{message}</Text>
             </View>
           ) : null}
 

@@ -127,3 +127,4 @@ admin/.env
 client/.env
 server/.env
 
+mobile/.env.example

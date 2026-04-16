@@ -1,6 +1,7 @@
 import ProductCard from "@/components/shop/ProductCard";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import { addProductToCart, apiRequest, getAuthToken, toggleWishlistProduct } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
 import { useStore } from "@/store/useStore";
 import { Product } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
@@ -39,7 +40,6 @@ export default function SearchResultsScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [pendingCartId, setPendingCartId] = useState<string | null>(null);
 
   const activeChips = useMemo(
@@ -134,10 +134,14 @@ export default function SearchResultsScreen() {
         }
         return next;
       });
-      setMessage(nextWishlisted ? "Added to wishlist" : "Removed from wishlist");
+      if (nextWishlisted) {
+        showSuccessToast("Wishlist updated", "Added to wishlist.");
+      } else {
+        showSuccessToast("Wishlist updated", "Removed from wishlist.");
+      }
       await refreshCounts();
     } catch {
-      setMessage("Could not update wishlist");
+      showErrorToast("Wishlist update failed", "Please try again.");
     }
   };
 
@@ -151,10 +155,10 @@ export default function SearchResultsScreen() {
     try {
       setPendingCartId(productId);
       await addProductToCart(productId, 1, token);
-      setMessage("Added to cart");
+      showSuccessToast("Added to cart", "Item added successfully.");
       await refreshCounts();
     } catch {
-      setMessage("Could not add to cart");
+      showErrorToast("Add to cart failed", "Please try again.");
     } finally {
       setPendingCartId(null);
     }
@@ -174,7 +178,6 @@ export default function SearchResultsScreen() {
 
       <View className="px-4 pb-2 pt-3">
         <Text className="text-sm font-bold text-gray-800">{params.q || "Products"}</Text>
-        {message ? <Text className="mt-1 text-sm text-[#5f6f94]">{message}</Text> : null}
         <View className="mt-2 flex-row flex-wrap gap-2">
           {activeChips.map((chip) => (
             <View key={chip} className="rounded-full bg-white px-3 py-1 shadow-sm">

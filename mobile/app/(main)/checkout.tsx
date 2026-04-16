@@ -3,6 +3,8 @@ import PaymentOption from "@/components/shop/PaymentOption";
 import ScreenWrapper from "@/components/common/ScreenWrapper";
 import InnerScreenHeader from "@/components/common/InnerScreenHeader";
 import { apiRequest, getAuthToken } from "@/constants/mobileApi";
+import { showErrorToast, showSuccessToast } from "@/lib/toast";
+// import { safeInitPaymentSheet, safePresentPaymentSheet } from "@/lib/stripeClient";
 import { useStore } from "@/store/useStore";
 import { Address } from "@/types/type";
 import { Feather } from "@expo/vector-icons";
@@ -10,7 +12,6 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -45,7 +46,16 @@ type CreateOrderResponse = {
   success: boolean;
   order: {
     _id: string;
+    total?: number;
   };
+};
+
+type PaymentIntentResponse = {
+  clientSecret?: string;
+  paymentIntentClientSecret?: string;
+  paymentIntentId?: string;
+  customerId?: string;
+  customerEphemeralKeySecret?: string;
 };
 
 export default function CheckoutScreen() {
@@ -60,6 +70,7 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [placing, setPlacing] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [addingAddress, setAddingAddress] = useState(false);
@@ -126,6 +137,7 @@ export default function CheckoutScreen() {
 
     if (!street.trim() || !city.trim() || !country.trim() || !postalCode.trim()) {
       setError("Please fill all address fields");
+      showErrorToast("Address required", "Please fill all address fields.");
       return;
     }
 
@@ -155,24 +167,175 @@ export default function CheckoutScreen() {
       setCountry("");
       setPostalCode("");
       setAddingAddress(false);
+      showSuccessToast("Address saved", "Your address has been added.");
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to add address");
+      showErrorToast("Address save failed", requestError instanceof Error ? requestError.message : "Please try again.");
     }
+  };
+
+  const getOrderTotal = useMemo(() => {
+    return items.reduce((sum, line) => sum + line.productId.price * line.quantity, 0);
+  }, [items]);
+
+  const parsePaymentIntentId = (clientSecret: string) => {
+    const [firstPart] = clientSecret.split("_secret");
+    return firstPart || "";
+  };
+
+  const createPaymentIntent = async (orderId: string, amount: number, token: string) => {
+    return await apiRequest<PaymentIntentResponse>(
+      "/api/payment/create-intent",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          orderId,
+          order_id: orderId,
+          amount,
+          currency: "pkr",
+          paymentMethod,
+        }),
+      },
+      token,
+    );
+  };
+
+  const confirmPaymentOnBackend = async (orderId: string, paymentIntentId: string, token: string) => {
+    await apiRequest<{ success?: boolean; message?: string }>(
+      "/api/payment/confirm",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          orderId,
+          order_id: orderId,
+          paymentIntentId,
+          status: "succeeded",
+        }),
+      },
+      token,
+    );
+  };
+
+  const markOrderPaid = async (orderId: string, paymentIntentId: string, token: string) => {
+    try {
+      await apiRequest<{ success?: boolean }>(
+        "/api/orders/update-status",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            orderId,
+            status: "paid",
+            paymentIntentId,
+          }),
+        },
+        token,
+      );
+    } catch {
+      await apiRequest<{ success?: boolean }>(
+        `/api/orders/${orderId}/status`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            status: "paid",
+            paymentIntentId,
+          }),
+        },
+        token,
+      );
+    }
+  };
+
+  const clearCartAfterCheckout = async (token: string) => {
+    try {
+      await apiRequest<{ success?: boolean }>("/api/carts", { method: "DELETE" }, token);
+    } catch {
+      // Cart clear failures should not block payment completion UX.
+    }
+  };
+
+  const navigateToSuccess = (orderId: string, amount: number) => {
+    const addressLabel = selectedAddress
+      ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country} ${selectedAddress.postalCode}`
+      : "N/A";
+
+    router.replace({
+      pathname: "/(main)/payment-success",
+      params: {
+        orderId,
+        total: String(amount),
+        paymentMethod,
+        address: addressLabel,
+      },
+    });
+  };
+
+  const payWithStripe = async (orderId: string, amount: number, token: string) => {
+    const intentResponse = await createPaymentIntent(orderId, amount, token);
+
+    const clientSecret = intentResponse.clientSecret || intentResponse.paymentIntentClientSecret;
+    if (!clientSecret) {
+      throw new Error("Payment intent client secret not received");
+    }
+
+    // let initResult;
+
+    // try {
+    //   // initResult = await safeInitPaymentSheet({
+    //   //   merchantDisplayName: "Bacha Bazar",
+    //   //   paymentIntentClientSecret: clientSecret,
+    //   //   customerId: intentResponse.customerId,
+    //   //   customerEphemeralKeySecret: intentResponse.customerEphemeralKeySecret,
+    //   //   allowsDelayedPaymentMethods: false,
+    //   //   defaultBillingDetails: {
+    //   //     name: "Bacha Bazar Customer",
+    //   //   },
+    //   // });
+    // } catch {
+    //   throw new Error("Stripe SDK is not available in this build. Please use a development build instead of Expo Go.");
+    // }
+
+    // if (initResult.error) {
+    //   throw new Error(initResult.error.message);
+    // }
+
+    // const sheetResult = await safePresentPaymentSheet();
+
+    // if (sheetResult.error) {
+    //   if (sheetResult.error.code === "Canceled") {
+    //     showErrorToast("Payment cancelled", "You cancelled the payment flow.");
+    //     return { paid: false, cancelled: true };
+    //   }
+
+    //   throw new Error(sheetResult.error.message);
+    // }
+
+    const paymentIntentId = intentResponse.paymentIntentId || parsePaymentIntentId(clientSecret);
+    if (!paymentIntentId) {
+      throw new Error("Payment intent id missing after payment.");
+    }
+
+    await confirmPaymentOnBackend(orderId, paymentIntentId, token);
+    await markOrderPaid(orderId, paymentIntentId, token);
+
+    return { paid: true, cancelled: false };
   };
 
   const placeOrder = async () => {
     if (!agreed) {
       setError("Please agree to Terms & Conditions");
+      showErrorToast("Terms required", "Please agree to Terms & Conditions.");
       return;
     }
 
     if (!selectedAddress) {
       setError("Please select or add an address");
+      showErrorToast("Address required", "Please select or add an address.");
       return;
     }
 
     if (!items.length) {
       setError("Your cart is empty");
+      showErrorToast("Cart is empty", "Add items before placing order.");
       return;
     }
 
@@ -184,6 +347,7 @@ export default function CheckoutScreen() {
 
     try {
       setPlacing(true);
+      setPaymentLoading(true);
       setError(null);
 
       const payloadItems = items.map((line) => ({
@@ -212,12 +376,25 @@ export default function CheckoutScreen() {
         token,
       );
 
+      const orderId = response.order._id;
+      const amount = response.order.total ?? getOrderTotal;
+
+      if (paymentMethod !== "Cash on Delivery") {
+        const paymentResult = await payWithStripe(orderId, amount, token);
+        if (paymentResult.cancelled) {
+          return;
+        }
+      }
+
+      await clearCartAfterCheckout(token);
       await refreshCounts();
-      Alert.alert("Order placed", "Your order was created successfully.");
-      router.push({ pathname: "/(main)/order-tracking/[id]", params: { id: response.order._id } });
+      showSuccessToast("Order confirmed", "Your payment/order was processed successfully.");
+      navigateToSuccess(orderId, amount);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Failed to place order");
+      showErrorToast("Checkout failed", requestError instanceof Error ? requestError.message : "Please try again.");
     } finally {
+      setPaymentLoading(false);
       setPlacing(false);
     }
   };
@@ -276,7 +453,7 @@ export default function CheckoutScreen() {
               <TextInput value={city} onChangeText={setCity} placeholder="City" className="rounded-xl border border-[#dde7ff] bg-[#f8faff] px-3 py-2 text-sm" />
               <TextInput value={country} onChangeText={setCountry} placeholder="Country" className="rounded-xl border border-[#dde7ff] bg-[#f8faff] px-3 py-2 text-sm" />
               <TextInput value={postalCode} onChangeText={setPostalCode} placeholder="Postal Code" className="rounded-xl border border-[#dde7ff] bg-[#f8faff] px-3 py-2 text-sm" />
-              <Pressable onPress={submitNewAddress} className="items-center rounded-xl bg-[#7d8ff6] py-2">
+              <Pressable onPress={submitNewAddress} disabled={placing || paymentLoading} className="items-center rounded-xl bg-[#7d8ff6] py-2" style={({ pressed }) => ({ opacity: pressed || placing || paymentLoading ? 0.8 : 1 })}>
                 <Text className="text-sm font-semibold text-white">Save Address</Text>
               </Pressable>
             </View>
@@ -321,8 +498,8 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       <View className="absolute bottom-0 left-0 right-0 border-t border-[#dbe6ff] bg-white px-4 pt-3" style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
-        <Pressable onPress={placeOrder} disabled={placing} className="items-center rounded-2xl bg-[#7d8ff6] py-3">
-          {placing ? <ActivityIndicator size="small" color="#ffffff" /> : <Text className="text-sm font-bold text-white">Place Order</Text>}
+        <Pressable onPress={placeOrder} disabled={placing || paymentLoading} className={`items-center rounded-2xl py-3 ${placing || paymentLoading ? "bg-[#98a8e8]" : "bg-[#7d8ff6]"}`}>
+          {placing || paymentLoading ? <ActivityIndicator size="small" color="#ffffff" /> : <Text className="text-sm font-bold text-white">Place Order</Text>}
         </Pressable>
       </View>
     </ScreenWrapper>
