@@ -184,7 +184,7 @@ const Login = () => {
             </CardContent>
             <CardFooter className="justify-center">
               <p className="text-sm text-gray-500">Don't have an acoount?{" "}
-                <Link to="/register" className="text-indigo-600 hover:text-indigo-800 hover:underline transition-all duration-200 ">Sign In</Link>
+                <Link to="/register" className="text-indigo-600 hover:text-indigo-800 hover:underline transition-all duration-200 ">Sign Up</Link>
               </p>
             </CardFooter>
           </Card>
